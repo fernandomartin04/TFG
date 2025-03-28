@@ -12,9 +12,9 @@ if ($conn->connect_error) {
     die("❌ Conexión fallida: " . $conn->connect_error);     
 }
 
-// Establecer codificación para caracteres especiales
+// Establezco codificación para caracteres especiales
 $conn->set_charset("utf8"); 
 
 // Mensaje para pruebas
-echo "✅ Conexión exitosa a la base de datos";
+//echo "✅ Conexión exitosa a la base de datos";
 ?>
