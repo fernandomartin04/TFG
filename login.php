@@ -1,37 +1,45 @@
 <?php
 session_start();
-include "includes/header.php";
+include "includes/header.php"; // Incluye el db.php
+
+//date_default_timezone_set('Europe/Madrid');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    include "includes/db.php"; // Asegúrate de que la conexión está disponible
+    $nombre = trim($_POST["nombre"]);
+    $contrasena = trim($_POST["contrasena"]); // Evito espacios en blanco al principio y al final
 
-    $email = trim($_POST["email"]); // Eliminar espacios en blanco al inicio y al final
-    $contrasena = trim($_POST["contrasena"]);
+    if ($conn) {
+        // Consulta para verificar el usuario por nombre o email
+        $query = "SELECT * FROM usuarios WHERE (nombre='" . mysqli_real_escape_string($conn, $nombre) . "' 
+                  OR email='" . mysqli_real_escape_string($conn, $nombre) . "') 
+                  AND contrasena='" . mysqli_real_escape_string($conn, $contrasena) . "'";
+                  
+        $result = mysqli_query($conn, $query);
 
-    $stmt = $conn->prepare("SELECT id, nombre, contrasena, rol_id FROM usuario WHERE email = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $resultado = $stmt->get_result();
-    
-    if ($resultado->num_rows == 1) {
-        $row = $resultado->fetch_assoc();
-        if (password_verify($contrasena, $row["contrasena"])) {
-            $_SESSION["usuario_id"] = $row["id"];
-            $_SESSION["usuario_nombre"] = $row["nombre"];
-            $_SESSION["usuario_rol"] = $row["rol_id"];
-            $_SESSION["usuario_email"] = $email;
+        if (mysqli_num_rows($result) == 1) {
+            $row = mysqli_fetch_assoc($result);
 
-            $_SESSION["mensaje"] = "<div class='alert alert-success text-center' role='alert'>Conexión exitosa, redirigiendo...</div>";
-            header("Location: index.php");
-            exit();
+            $_SESSION['usuario_id'] = $row['id'];
+            $_SESSION['usuario_nombre'] = $row['nombre'];
+            $_SESSION['usuario_rol'] = $row['rol_id'];
+
+            // Redirige según el rol
+            if ($row['rol_id'] == 1) {
+                header("Location: index.php");
+                exit();
+            } elseif ($row['rol_id'] == 2) {
+                header("Location: index.php");
+                exit();
+            } elseif ($row['rol_id'] == 3) {
+                header("Location: index.php");
+                exit();
+            }
         } else {
-            $_SESSION["mensaje"] = "<div class='alert alert-danger text-center' role='alert'>Contraseña incorrecta</div>";
+            echo "<div class='alert alert-danger text-center' role='alert'>Usuario o contraseña incorrectos</div>";
         }
     } else {
-        $_SESSION["mensaje"] = "<div class='alert alert-danger text-center' role='alert'>Usuario no encontrado</div>";
+        echo "<div class='alert alert-danger text-center' role='alert'>Error de conexión a la base de datos</div>";
     }
-
-    $stmt->close();
 }
 ?>
 
@@ -41,18 +49,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <form class="col-sm-6 border p-4 rounded shadow bg-white" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
                 <h2 class="text-center mb-4">Iniciar Sesión</h2>
 
-                <?php
-                if (isset($_SESSION["mensaje"])) {
-                    echo $_SESSION["mensaje"];
-                    unset($_SESSION["mensaje"]); // Eliminar el mensaje después de mostrarlo
-                }
-                ?>
-
                 <div class="input-group mb-3">
                     <span class="input-group-text">
-                        <i class="bi bi-envelope"></i>
+                        <i class="bi bi-person"></i>
                     </span>
-                    <input type="email" class="form-control" name="email" placeholder="Correo electrónico" required>
+                    <input type="text" class="form-control" name="nombre" placeholder="Usuario o Correo Electrónico" required>
                 </div>
 
                 <div class="input-group mb-3">
@@ -64,11 +65,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 <div class="d-flex justify-content-between">
                     <input type="submit" class="btn btn-success" value="Iniciar Sesión">
-                    <a href="registro.php" class="btn btn-secondary">Registrarse</a>
+
                 </div>
+                <div class="text-center mt-3">
+                    <p>¿No tienes cuenta? <a href="registro.php">Regístrate aquí</a></p>
             </form>
         </div>
     </div>
 </body>
 
 <?php include "includes/footer.php"; ?>
+
