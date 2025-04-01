@@ -1,12 +1,52 @@
 <?php
 session_start();
 include "includes/header.php"; // Incluye el db.php
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $nombre = trim($_POST["nombre"]);
+    $email = trim($_POST["email"]);
+    $contrasena = trim($_POST["contrasena"]); // Evito espacios en blanco al principio y al final
+
+    if ($conn) {
+        // Consulta para verificar el usuario por nombre o email
+        $query = "SELECT * FROM usuarios WHERE (nombre='" . mysqli_real_escape_string($conn, $nombre) . "' 
+                  OR email='" . mysqli_real_escape_string($conn, $nombre) . "') 
+                  AND contrasena='" . mysqli_real_escape_string($conn, $contrasena) . "'";
+                  
+        $result = mysqli_query($conn, $query);
+
+        if (mysqli_num_rows($result) == 1) {
+            $row = mysqli_fetch_assoc($result);
+
+            $_SESSION['usuario_id'] = $row['id'];
+            $_SESSION['usuario_nombre'] = $row['nombre'];
+            $_SESSION['usuario_rol'] = $row['rol_id'];
+
+            // Redirige según el rol
+            if ($row['rol_id'] == 1) {
+                header("Location: index.php");
+                exit();
+            } elseif ($row['rol_id'] == 2) {
+                header("Location: index.php");
+                exit();
+            } elseif ($row['rol_id'] == 3) {
+                header("Location: index.php");
+                exit();
+            }
+        } else {
+            echo "<div class='alert alert-danger text-center' role='alert'>Usuario o contraseña incorrectos</div>";
+        }
+    } else {
+        echo "<div class='alert alert-danger text-center' role='alert'>Error de conexión a la base de datos</div>";
+    }
+}
+
 ?>
 
 <body class="bg-light">
     <div class="container">
         <div class="row justify-content-center align-items-center min-vh-100">
-            <form class="col-sm-6 border p-4 rounded shadow bg-white" action="registro.php" method="post">
+            <form class="col-sm-6 border p-4 rounded shadow bg-white" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
                 <h2 class="text-center mb-4">Regístrate</h2>
 
                 <div class="input-group mb-3">
@@ -32,6 +72,9 @@ include "includes/header.php"; // Incluye el db.php
 
                 <div class="d-flex justify-content-between">
                     <button type="submit" class="btn btn-success">Registrar</button>
+                </div>
+                <div class="text-center mt-3">
+                    <p>¿Ya tienes una cuenta? <a href="login.php">Inicia sesión</a></p>
                 </div>
             </form>
         </div>
