@@ -19,9 +19,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (mysqli_num_rows($result) == 1) {
             $row = mysqli_fetch_assoc($result);
 
-            $_SESSION['usuario_id'] = $row['id'];
-            $_SESSION['usuario_nombre'] = $row['nombre'];
-            $_SESSION['usuario_rol'] = $row['rol_id'];
+            $_SESSION['id'] = $row['id'];
+            $_SESSION['nombre'] = $row['nombre'];
+            $_SESSION['rol_id'] = $row['rol_id'];
 
             // Redirige según el rol
             if ($row['rol_id'] == 1) {
@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 header("Location: index.php");
                 exit();
             } elseif ($row['rol_id'] == 3) {
-                header("Location: index.php");
+                header("Location: panel_admin.php");
                 exit();
             }
         } else {
