@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 header("Location: index.php");
                 exit();
             } elseif ($row['rol_id'] == 3) {
-                header("Location: panel_admin.php");
+                header("Location: index.php");
                 exit();
             }
         } else {

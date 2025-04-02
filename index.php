@@ -37,7 +37,10 @@
     </style>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    
+    <?php include 'includes/header.php'; 
+    session_start();
+    ?>
     
     <div class="hero">
         <h1>Descubre tu estilo en UrbanWear</h1>

@@ -1,4 +1,6 @@
-<?php include "db.php"; ?>
+<?php include "db.php"; 
+    session_start();
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -31,6 +33,11 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">Carrito</a>
+                    </li>
+                    <li>
+                        <?php if ($_SESSION['rol_id'] == 3): ?>
+                        <a href="../panel_admin.php" class="nav-link">Panel Admin</a>
+                        <?php endif; ?>
                     </li>
                 </ul>
                 <a href="../login.php" class="btn btn-outline-light">Iniciar sesión</a>
