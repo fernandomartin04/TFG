@@ -7,12 +7,12 @@ include "includes/header.php"; // Incluye el db.php
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nombre = trim($_POST["nombre"]);
     $contrasena = trim($_POST["contrasena"]); // Evito espacios en blanco al principio y al final
-
+    $contrasenaCodificada = base64_encode($contrasena); // Codifico la contraseña
     if ($conn) {
         // Consulta para verificar el usuario por nombre o email
         $query = "SELECT * FROM usuarios WHERE (nombre='" . mysqli_real_escape_string($conn, $nombre) . "' 
                   OR email='" . mysqli_real_escape_string($conn, $nombre) . "') 
-                  AND contrasena='" . mysqli_real_escape_string($conn, $contrasena) . "'";
+                  AND contrasena='" . mysqli_real_escape_string($conn, $contrasenaCodificada) . "'";
                   
         $result = mysqli_query($conn, $query);
 

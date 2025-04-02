@@ -9,32 +9,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($conn) {
         // Consulta para verificar el usuario por nombre o email
-        $query = "SELECT * FROM usuarios WHERE (nombre='" . mysqli_real_escape_string($conn, $nombre) . "' 
-                  OR email='" . mysqli_real_escape_string($conn, $nombre) . "') 
-                  AND contrasena='" . mysqli_real_escape_string($conn, $contrasena) . "'";
+        $query = "SELECT * FROM usuarios WHERE nombre='" . mysqli_real_escape_string($conn, $nombre) . "' 
+                  OR email='" . mysqli_real_escape_string($conn, $email) . "'";
                   
+                  // Contrasena no hace falta en el registro, ya que se registra al crear la cuenta
+        
         $result = mysqli_query($conn, $query);
 
-        if (mysqli_num_rows($result) == 1) {
-            $row = mysqli_fetch_assoc($result);
+        if (mysqli_num_rows($result) == 0) {
 
-            $_SESSION['usuario_id'] = $row['id'];
-            $_SESSION['usuario_nombre'] = $row['nombre'];
-            $_SESSION['usuario_rol'] = $row['rol_id'];
-
-            // Redirige según el rol
-            if ($row['rol_id'] == 1) {
-                header("Location: index.php");
+            //echo "<div class='alert alert-success text-center' role='alert'>El usuario no existe, puedes registrarte</div>";
+            $insert = "INSERT INTO usuarios (nombre, email, contrasena, rol_id) VALUES (
+                '" . mysqli_real_escape_string($conn, $nombre) . "',
+                '" . mysqli_real_escape_string($conn, $email) . "',
+                '" . mysqli_real_escape_string($conn,base64_encode($_POST['contrasena'])) . "',
+                1
+            )";
+            
+            if (mysqli_query($conn, $insert)) {
+                //echo "<div class='alert alert-success text-center' role='alert'>Registro exitoso!!</div>";
+                $_SESSION['usuario_id'] = mysqli_insert_id($conn);
+                $_SESSION['usuario_nombre'] = $nombre;
+                $_SESSION['usuario_rol'] = 1;
+                
+                echo "<div class='alert alert-success text-center' role='alert'> Registro exitoso!! Redirigiendo...</div>";
+                echo "<script> setTimeout(function() { window.location.href = 'index.php'; }, 2000); </script>";
                 exit();
-            } elseif ($row['rol_id'] == 2) {
-                header("Location: index.php");
-                exit();
-            } elseif ($row['rol_id'] == 3) {
-                header("Location: index.php");
-                exit();
+            
+            } else {
+                echo "<div class='alert alert-danger text-center' role='alert'>Error al registrar el usuario</div>";
             }
+            
+            
         } else {
-            echo "<div class='alert alert-danger text-center' role='alert'>Usuario o contraseña incorrectos</div>";
+            echo "<div class='alert alert-danger text-center' role='alert'>El usuario ya existe!!</div>";
         }
     } else {
         echo "<div class='alert alert-danger text-center' role='alert'>Error de conexión a la base de datos</div>";
