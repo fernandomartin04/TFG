@@ -1,5 +1,6 @@
-<?php include "db.php"; 
-    session_start();
+<?php 
+include "db.php"; 
+session_start();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -14,7 +15,6 @@
 
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -34,13 +34,26 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#">Carrito</a>
                     </li>
-                    <li>
-                        <?php if ($_SESSION['rol_id'] == 3): ?>
-                        <a href="../panel_admin.php" class="nav-link">Panel Admin</a>
+                    <?php if (isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 3): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../panel_admin.php">Panel Admin</a>
                         <?php endif; ?>
                     </li>
+                    <?php if (isset($_SESSION['nombre'])): ?>
+                    <li class="nav-item">
+                        <a href="../editar_perfil.php" class="nav-link">Editar Perfil</a>
+                    </li>
+                
+                    <?php endif; ?>
                 </ul>
-                <a href="../login.php" class="btn btn-outline-light">Iniciar sesión</a>
+                <?php if (isset($_SESSION['rol_id'])): ?>
+                    <span class="navbar-text text-light me-3">
+                        👤 <?php echo $_SESSION['nombre']; ?>
+                    </span>
+                    <a href="../logout.php" class="btn btn-outline-danger ms-2">Cerrar sesión</a>
+                <?php else: ?>
+                    <a href="../login.php" class="btn btn-outline-light">Iniciar sesión</a>
+                <?php endif; ?>
             </div>
         </div>
     </nav>

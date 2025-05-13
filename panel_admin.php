@@ -61,7 +61,7 @@ if ($_POST && isset($_POST["boton_registrar"])) { //
 }
 ?>
 <script>
-    /*
+    
     function delUser(id,usuario,cont){
 
         var result = window.confirm('Estás seguro de eliminar el usuario '+usuario+ '?');
@@ -83,7 +83,7 @@ if ($_POST && isset($_POST["boton_registrar"])) { //
         
         }
     }
-    */
+    
 </script>
 <div class="container mt-4">
     <?php //include "barra_admin.php"; ?>
@@ -172,7 +172,7 @@ if ($_POST && isset($_POST["boton_registrar"])) { //
                                 echo "<td>{$nombre}</td>";
                                 echo "<td>{$rol_id}</td>";  
                                 echo "<td>{$email}</td>";  
-                                //echo "<td class='text-center'><a onclick=\"delUser('{$id}','{$usuario}','{$cont}')\" class='btn btn-danger'><i class='bi bi-trash'></i> Eliminar</a></td>";
+                                echo "<td class='text-center'><a onclick=\"delUser('{$id}','{$usuario}','{$cont}')\" class='btn btn-danger'><i class='bi bi-trash'></i> Eliminar</a></td>";
                                 echo "</tr>";
                                 $cont++;
                             }
