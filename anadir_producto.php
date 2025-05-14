@@ -12,12 +12,28 @@ if (isset($_POST['guardar'])) {
     $descripcion = trim($_POST['descripcion']);
     $precio = floatval($_POST['precio']);
 
-    // Subida de imagen
-    $imagen_nombre = $_FILES['imagen']['name'];
+    $imagen_original = $_FILES['imagen']['name'];
     $imagen_temporal = $_FILES['imagen']['tmp_name'];
-    $ruta_destino = "img/" . $imagen_nombre;
+    $imagen_tamano = $_FILES['imagen']['size'];
+    $imagen_tipo = mime_content_type($imagen_temporal);
 
-    if (move_uploaded_file($imagen_temporal, $ruta_destino)) {
+    // Obtener extensión y generar nombre único
+    $extension = strtolower(pathinfo($imagen_original, PATHINFO_EXTENSION));
+    $extensiones_permitidas = ['jpg', 'jpeg', 'png', 'webp'];
+    $nombre_unico = uniqid('producto_', true) . '.' . $extension;
+    $ruta_destino = "img/" . $nombre_unico;
+
+    // Validaciones
+    if (!in_array($extension, $extensiones_permitidas)) {
+        echo "<div class='container mt-4 alert alert-warning'>Solo se permiten imágenes JPG, JPEG, PNG o WEBP.</div>";
+        exit; // Evitar continuar con el proceso si la imagen no es válida
+    } elseif ($imagen_tamano > 2 * 1024 * 1024) {
+        echo "<div class='container mt-4 alert alert-warning'>La imagen no puede superar los 2 MB.</div>";
+        exit; // Evitar continuar si la imagen es demasiado grande
+    } elseif (strpos($imagen_tipo, 'image/') !== 0) {
+        echo "<div class='container mt-4 alert alert-warning'>El archivo debe ser una imagen válida.</div>";
+        exit; // Evitar continuar si el archivo no es una imagen
+    } elseif (move_uploaded_file($imagen_temporal, $ruta_destino)) {
         $query = "INSERT INTO productos (nombre, descripcion, precio, imagen) 
                   VALUES ('$nombre', '$descripcion', $precio, '$ruta_destino')";
         if (mysqli_query($conn, $query)) {
@@ -48,10 +64,11 @@ if (isset($_POST['guardar'])) {
         </div>
         <div class="mb-3">
             <label class="form-label">Imagen</label>
-            <input type="file" name="imagen" class="form-control" accept="img/" required>
+            <input type="file" name="imagen" class="form-control" accept=".jpg, .jpeg, .png, .webp" required>
         </div>
         <button type="submit" name="guardar" class="btn btn-primary">Guardar producto</button>
     </form>
 </main>
 
 <?php include "includes/footer.php"; ?>
+
