@@ -17,12 +17,14 @@ if (!$resultado) {
         <?php while ($producto = mysqli_fetch_assoc($resultado)) { ?>
             <div class="col-md-4 mb-4">
                 <div class="card">
-                    <img src="<?php echo $producto['imagen']; ?>" class="card-img-top" alt="<?php echo $producto['nombre']; ?>">
+                    <a href="detalle_producto.php?id=<?php echo $producto['id']; ?>">
+                        <img src="<?php echo $producto['imagen']; ?>" class="card-img-top" alt="<?php echo $producto['nombre']; ?>">
+                    </a>
                     <div class="card-body">
                         <h5 class="card-title"><?php echo $producto['nombre']; ?></h5>
                         <p class="card-text"><?php echo $producto['descripcion']; ?></p>
                         <p class="card-text"><strong>€<?php echo number_format($producto['precio'], 2); ?></strong></p>
-                        <a href="#" class="btn btn-primary">Comprar</a>
+                        <a href="detalle_producto.php?id=<?php echo $producto['id']; ?>" class="btn btn-primary">Ver detalles</a>
                     </div>
                 </div>
             </div>

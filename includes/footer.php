@@ -1,4 +1,4 @@
-<footer class="bg-dark text-white text-center p-3 mt-auto fixed-bottom">
+<footer class="bg-dark text-white text-center p-3 mt-5 fixed-bottom">
     <p>&copy; 2025 UrbanWear. Todos los derechos reservados.</p>
     <div>
         <a href="#" class="text-white me-3"><i class="bi bi-facebook"></i></a>
