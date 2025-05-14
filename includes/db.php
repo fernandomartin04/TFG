@@ -1,7 +1,7 @@
 <?php
 $servername = 'sql202.infinityfree.com';   
 $username = 'if0_38587556';   
-$password = "RsjmrY76PsqHBT";   
+$password = "PedroS4nche";   
 $dbname = 'if0_38587556_tfg_fer';
 
 // Crear conexión
