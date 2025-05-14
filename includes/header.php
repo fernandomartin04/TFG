@@ -32,7 +32,7 @@ session_start();
                         <a class="nav-link" href="../index.php">Inicio</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Productos</a>
+                        <a class="nav-link" href="../productos.php">Productos</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">Carrito</a>
@@ -45,6 +45,11 @@ session_start();
                     <?php if (isset($_SESSION['nombre'])): ?>
                     <li class="nav-item">
                         <a href="../editar_perfil.php" class="nav-link">Editar Perfil</a>
+                    </li>
+                    <?php endif; ?>
+                    <?php if (isset($_SESSION['rol_id']) && ($_SESSION['rol_id'] == 2 || $_SESSION['rol_id'] == 3)): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../anadir_producto.php">Añadir producto</a>
                     </li>
                     <?php endif; ?>
                 </ul>
