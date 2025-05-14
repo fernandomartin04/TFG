@@ -1,68 +1,58 @@
-<?php
-session_start();
-include "includes/header.php";
+<?php include "includes/header.php"; ?>
 
-if (!isset($_SESSION['nombre'])) {
+<?php
+// Verificar si el usuario ha iniciado sesión
+if (!isset($_SESSION['id'])) {
     header("Location: login.php");
     exit();
 }
 
-$nombreUsuario = $_SESSION['nombre'];
-$query = "SELECT * FROM usuarios WHERE nombre = '$nombreUsuario'";
-$result = mysqli_query($conn, $query);
-$user = mysqli_fetch_assoc($result);
+$id_usuario = $_SESSION['id'];
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $nombre = htmlspecialchars($_POST['nombre']);
-    $email = htmlspecialchars($_POST['email']);
-    $contrasena = htmlspecialchars($_POST['contrasena']);
-    $contrasena2 = htmlspecialchars($_POST['contrasena2']);
-    $contrasena_codificada = base64_encode($contrasena);
+// Obtener datos actuales del usuario
+$query = "SELECT * FROM usuarios WHERE id = $id_usuario";
+$resultado = mysqli_query($conn, $query);
 
-    // Validación de email
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "El correo no es válido.";
-    } elseif ($contrasena != $contrasena2) {
-        $error = "Las contraseñas no coinciden.";
-    } else {
-        // Actualizar los datos
-        $updateQuery = "UPDATE usuarios SET nombre = '$nombre', email = '$email', contrasena = '$contrasena_codificada' WHERE nombre = '$nombreUsuario'";
-        if (mysqli_query($conn, $updateQuery)) {
-            $_SESSION['nombre'] = $nombre;  // Actualizamos la sesión con el nuevo nombre
-            header("Location: perfil.php");  // Redirigir al perfil con mensaje de éxito
-        } else {
-            $error = "Error al actualizar los datos.";
-        }
-    }
+if ($resultado && mysqli_num_rows($resultado) > 0) {
+    $usuario = mysqli_fetch_assoc($resultado);
+} else {
+    echo "<div class='container mt-4 alert alert-danger'>Error al cargar los datos del usuario.</div>";
+    include "includes/footer.php";
+    exit();
 }
 
+// Actualizar datos si se envía el formulario
+if (isset($_POST['guardar'])) {
+    $nuevo_nombre = trim($_POST['nombre']);
+    $nuevo_email = trim($_POST['email']);
+
+    if (filter_var($nuevo_email, FILTER_VALIDATE_EMAIL)) {
+        $query_actualizar = "UPDATE usuarios SET nombre = '$nuevo_nombre', email = '$nuevo_email' WHERE id = $id_usuario";
+        if (mysqli_query($conn, $query_actualizar)) {
+            echo "<div class='container mt-4 alert alert-success'>Datos actualizados correctamente.</div>";
+            $_SESSION['nombre'] = $nuevo_nombre; // Por si se usa en la barra
+        } else {
+            echo "<div class='container mt-4 alert alert-danger'>Error al actualizar los datos: " . mysqli_error($conn) . "</div>";
+        }
+    } else {
+        echo "<div class='container mt-4 alert alert-warning'>El correo electrónico no es válido.</div>";
+    }
+}
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Perfil</title>
-    <!-- Agrega los links y scripts necesarios -->
-</head>
-<body>
-    <h1>Editar Perfil</h1>
-    <?php if (isset($error)) { echo "<p class='error'>$error</p>"; } ?>
-    <form method="POST" action="editar_perfil.php">
-        <label for="nombre">Nombre:</label>
-        <input type="text" name="nombre" id="nombre" value="<?php echo $user['nombre']; ?>" required><br>
-        
-        <label for="email">Correo:</label>
-        <input type="email" name="email" id="email" value="<?php echo $user['email']; ?>" required><br>
-
-        <label for="contrasena">Nueva Contraseña:</label>
-        <input type="password" name="contrasena" id="contrasena"><br>
-
-        <label for="contrasena2">Repetir Contraseña:</label>
-        <input type="password" name="contrasena2" id="contrasena2"><br>
-
-        <button type="submit">Actualizar</button>
+<div class="container mt-5">
+    <h2>Editar Perfil</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre de usuario</label>
+            <input type="text" class="form-control" id="nombre" name="nombre" value="<?php echo htmlspecialchars($usuario['usuario']); ?>" required>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Correo electrónico</label>
+            <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($usuario['email']); ?>" required>
+        </div>
+        <button type="submit" class="btn btn-primary" name="guardar">Guardar cambios</button>
     </form>
-</body>
-</html>
+</div>
+
+<?php include "includes/footer.php"; ?>

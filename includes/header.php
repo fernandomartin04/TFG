@@ -15,8 +15,11 @@ session_start();
 
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    
+
 </head>
 <body>
+
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="index.php">UrbanWear</a>
@@ -43,7 +46,6 @@ session_start();
                     <li class="nav-item">
                         <a href="../editar_perfil.php" class="nav-link">Editar Perfil</a>
                     </li>
-                
                     <?php endif; ?>
                 </ul>
                 <?php if (isset($_SESSION['rol_id'])): ?>
