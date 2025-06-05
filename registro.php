@@ -34,10 +34,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Insertar nuevo usuario con contraseña hasheada
                 $hash = password_hash($contrasena, PASSWORD_BCRYPT, ["cost" => 12]);
 
-                $stmt = $conn->prepare("INSERT INTO usuarios (nombre, email, contrasena, rol_id) VALUES (?, ?, ?, 2)");
+                $stmt = $conn->prepare("INSERT INTO usuarios (nombre, email, contrasena, rol_id) VALUES (?, ?, ?, 1)");
                 $stmt->bind_param("sss", $nombre, $email, $hash);
                 if ($stmt->execute()) {
-                    $mensaje = "Registro exitoso. Ya puedes iniciar sesión.";
+                    header("Location: login.php");
+                    exit();
                 } else {
                     $mensaje = "Error al registrar usuario.";
                 }
