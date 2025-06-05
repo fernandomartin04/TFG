@@ -57,7 +57,8 @@ if (!$resultado) {
                         <h5 class="card-title"><?php echo $producto['nombre']; ?></h5>
                         <p class="card-text"><?php echo $producto['descripcion']; ?></p>
                         <p class="card-text fw-bold">€<?php echo number_format($producto['precio'], 2); ?></p>
-                        <a href="detalle_producto.php?id=<?php echo $producto['id']; ?>" class="btn btn-primary">Ver detalles</a>
+                        <a href="detalle_producto.php?id=<?php echo $producto['id']; ?>" class="btn btn-primary mb-2">Ver detalles</a>
+                        <a href="agregar_al_carrito.php?id=<?php echo $producto['id']; ?>" class="btn btn-outline-success">Añadir al carrito</a>
                     </div>
                 </div>
             </div>

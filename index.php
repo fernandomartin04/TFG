@@ -1,3 +1,6 @@
+<?php
+session_start(); 
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,6 +20,7 @@
             color: white;
             text-align: center;
             padding: 100px 20px;
+            padding-bottom: 100px;
         }
         .hero h1 {
             font-size: 3rem;
@@ -33,59 +37,62 @@
             height: 250px; 
             object-fit: cover;
         }
-
     </style>
 </head>
 <body>
-    
-    <?php include 'includes/header.php'; 
-    session_start();
-    ?>
-    
-    <div class="hero">
-        <h1>Descubre tu estilo en UrbanWear</h1>
-        <p>Moda urbana para todas las estaciones</p>
-        <a href="#productos" class="btn btn-custom btn-lg">Ver tienda</a>
-    </div>
-    
-    <div class="container mt-5" id="productos">
-        <h2 class="text-center mb-4">Productos Destacados</h2>
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card">
-                    <img src="img/producto1.jpg" class="card-img-top" alt="Camiseta">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Camiseta Street</h5>
-                        <p class="card-text">Moderna y cómoda para cualquier ocasión.</p>
-                        <button class="btn btn-custom">Añadir al carrito</button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <img src="img/producto2.jpg" class="card-img-top" alt="Sudadera">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Sudadera Urban</h5>
-                        <p class="card-text">Perfecta para un look casual y moderno.</p>
-                        <button class="btn btn-custom">Añadir al carrito</button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <img src="img/producto3.jpg" class="card-img-top" alt="Pantalón">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Zapatillas casuals</h5>
-                        <p class="card-text">Comodidad y estilo en una sola prenda.</p>
-                        <button class="btn btn-custom">Añadir al carrito</button>
-                    </div>
+
+<?php include 'includes/header.php'; ?>
+
+<div class="hero">
+    <h1>Descubre tu estilo en UrbanWear</h1>
+    <p>Moda urbana para todas las estaciones</p>
+    <a href="#productos" class="btn btn-custom btn-lg">Ver tienda</a>
+</div>
+
+<div class="container mt-5" id="productos">
+    <h2 class="text-center mb-4">Productos Destacados</h2>
+    <div class="row">
+
+        <!-- Producto 1: Camiseta Versace -->
+        <div class="col-md-4">
+            <div class="card">
+                <img src="img/camiseta_versace.jpg" class="card-img-top" alt="Camiseta Versace">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Camiseta Versace</h5>
+                    <p class="card-text">Camiseta ideal para verano, cómoda y 100% algodón.</p>
+                    <a href="agregar_al_carrito.php?id=1" class="btn btn-custom">Añadir al carrito</a>
                 </div>
             </div>
         </div>
+
+        <!-- Producto 2: Camiseta Tupac -->
+        <div class="col-md-4">
+            <div class="card">
+                <img src="img/producto1.jpg" class="card-img-top" alt="Camiseta Tupac">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Camiseta Tupac</h5>
+                    <p class="card-text">De color negro, casual y oversize. Tendencia del momento!!</p>
+                    <a href="agregar_al_carrito.php?id=2" class="btn btn-custom">Añadir al carrito</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Producto 3: Sudadera Tupac -->
+        <div class="col-md-4">
+            <div class="card">
+                <img src="img/producto2.jpg" class="card-img-top" alt="Sudadera Tupac">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Sudadera Tupac</h5>
+                    <p class="card-text">Oversize, color negro y protagonizada por el famoso artista Tupac.</p>
+                    <a href="agregar_al_carrito.php?id=3" class="btn btn-custom">Añadir al carrito</a>
+                </div>
+            </div>
+        </div>
+
     </div>
-    
-    <?php include 'includes/footer.php'; ?>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+
+<?php include 'includes/footer.php'; ?>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

@@ -1,13 +1,14 @@
-<?php include "includes/header.php"; ?>
+<?php 
+include "includes/header.php"; 
+require "includes/db.php";
 
-<?php
 if (!isset($_GET['id'])) {
     echo "<div class='container mt-4 alert alert-danger'>Producto no especificado.</div>";
     include "includes/footer.php";
     exit();
 }
 
-$id = $_GET['id'];
+$id = (int) $_GET['id'];
 $query = "SELECT * FROM productos WHERE id = $id";
 $resultado = mysqli_query($conn, $query);
 
@@ -30,7 +31,7 @@ if ($resultado && mysqli_num_rows($resultado) > 0) {
             <p><?php echo htmlspecialchars($producto['descripcion']); ?></p>
             <h4><?php echo number_format($producto['precio'], 2); ?> €</h4>
 
-            <form method="POST" action="carrito.php">
+            <form method="GET" action="agregar_al_carrito.php">
                 <div class="mb-3">
                     <label for="talla" class="form-label">Selecciona tu talla:</label>
                     <select name="talla" id="talla" class="form-select" required>
@@ -43,7 +44,7 @@ if ($resultado && mysqli_num_rows($resultado) > 0) {
                     </select>
                 </div>
 
-                <input type="hidden" name="producto_id" value="<?php echo $producto['id']; ?>">
+                <input type="hidden" name="id" value="<?php echo $producto['id']; ?>">
                 <button type="submit" class="btn btn-primary">Añadir al carrito</button>
             </form>
         </div>

@@ -1,44 +1,39 @@
 <?php
 session_start();
-include "includes/header.php"; // Incluye el db.php
+include "includes/header.php"; // Incluye conexión a BD
 
-//date_default_timezone_set('Europe/Madrid');
+$mensaje = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nombre = trim($_POST["nombre"]);
-    $contrasena = trim($_POST["contrasena"]); // Evito espacios en blanco al principio y al final
-    $contrasenaCodificada = base64_encode($contrasena); // Codifico la contraseña
+    $contrasena = $_POST["contrasena"];
+
     if ($conn) {
-        // Consulta para verificar el usuario por nombre o email
-        $query = "SELECT * FROM usuarios WHERE (nombre='" . mysqli_real_escape_string($conn, $nombre) . "' 
-                  OR email='" . mysqli_real_escape_string($conn, $nombre) . "') 
-                  AND contrasena='" . mysqli_real_escape_string($conn, $contrasenaCodificada) . "'";
-                  
-        $result = mysqli_query($conn, $query);
+        // Consulta preparada segura para evitar inyección SQL
+        $stmt = $conn->prepare("SELECT id, nombre, email, contrasena, rol_id FROM usuarios WHERE nombre = ? OR email = ?");
+        $stmt->bind_param("ss", $nombre, $nombre);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
 
-        if (mysqli_num_rows($result) == 1) {
-            $row = mysqli_fetch_assoc($result);
+        if ($resultado->num_rows === 1) {
+            $row = $resultado->fetch_assoc();
 
-            $_SESSION['id'] = $row['id'];
-            $_SESSION['nombre'] = $row['nombre'];
-            $_SESSION['rol_id'] = $row['rol_id'];
+            // Verifica la contraseña hasheada
+            if (password_verify($contrasena, $row['contrasena'])) {
+                $_SESSION['id'] = $row['id'];
+                $_SESSION['nombre'] = $row['nombre'];
+                $_SESSION['rol_id'] = $row['rol_id'];
 
-            // Redirige según el rol
-            if ($row['rol_id'] == 1) {
                 header("Location: index.php");
                 exit();
-            } elseif ($row['rol_id'] == 2) {
-                header("Location: index.php");
-                exit();
-            } elseif ($row['rol_id'] == 3) {
-                header("Location: index.php");
-                exit();
+            } else {
+                $mensaje = "Usuario o contraseña incorrectos.";
             }
         } else {
-            echo "<div class='alert alert-danger text-center' role='alert'>Usuario o contraseña incorrectos</div>";
+            $mensaje = "Usuario o contraseña incorrectos.";
         }
     } else {
-        echo "<div class='alert alert-danger text-center' role='alert'>Error de conexión a la base de datos</div>";
+        $mensaje = "Error de conexión a la base de datos.";
     }
 }
 ?>
@@ -46,8 +41,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body class="bg-light">
     <div class="container">
         <div class="row justify-content-center align-items-center min-vh-100">
-            <form class="col-sm-6 border p-4 rounded shadow bg-white" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+            <form class="col-sm-6 border p-4 rounded shadow bg-white" action="<?= htmlspecialchars($_SERVER["PHP_SELF"]) ?>" method="post">
                 <h2 class="text-center mb-4">Iniciar Sesión</h2>
+
+                <?php if (!empty($mensaje)): ?>
+                    <div class='alert alert-danger text-center' role='alert'>
+                        <?= htmlspecialchars($mensaje) ?>
+                    </div>
+                <?php endif; ?>
 
                 <div class="input-group mb-3">
                     <span class="input-group-text">
@@ -65,14 +66,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 <div class="d-flex justify-content-between">
                     <input type="submit" class="btn btn-success" value="Iniciar Sesión">
-
                 </div>
+
                 <div class="text-center mt-3">
                     <p>¿No tienes cuenta? <a href="registro.php">Regístrate aquí</a></p>
+                </div>
             </form>
         </div>
     </div>
 </body>
 
 <?php include "includes/footer.php"; ?>
-

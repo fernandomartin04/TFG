@@ -1,93 +1,90 @@
 <?php
 session_start();
-include "includes/header.php"; // Incluye el db.php
+include "includes/header.php"; // incluye conexión BD
+
+$mensaje = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nombre = trim($_POST["nombre"]);
     $email = trim($_POST["email"]);
-    $contrasena = trim($_POST["contrasena"]); // Evito espacios en blanco al principio y al final
+    $contrasena = $_POST["contrasena"];
 
-    if ($conn) {
-        // Consulta para verificar el usuario por nombre o email
-        $query = "SELECT * FROM usuarios WHERE nombre='" . mysqli_real_escape_string($conn, $nombre) . "' 
-                  OR email='" . mysqli_real_escape_string($conn, $email) . "'";
-                  
-                  // Contrasena no hace falta en el registro, ya que se registra al crear la cuenta
-        
-        $result = mysqli_query($conn, $query);
+    // Validación de contraseña (mínimo 12 caracteres, etc.)
+    function validarContrasena($pwd) {
+        return strlen($pwd) >= 12 &&
+               preg_match('/[A-Z]/', $pwd) &&
+               preg_match('/[a-z]/', $pwd) &&
+               preg_match('/[0-9]/', $pwd) &&
+               preg_match('/[\W]/', $pwd);
+    }
 
-        if (mysqli_num_rows($result) == 0) {
-
-            //echo "<div class='alert alert-success text-center' role='alert'>El usuario no existe, puedes registrarte</div>";
-            $insert = "INSERT INTO usuarios (nombre, email, contrasena, rol_id) VALUES (
-                '" . mysqli_real_escape_string($conn, $nombre) . "',
-                '" . mysqli_real_escape_string($conn, $email) . "',
-                '" . mysqli_real_escape_string($conn,base64_encode($_POST['contrasena'])) . "',
-                1
-            )";
-            
-            if (mysqli_query($conn, $insert)) {
-                //echo "<div class='alert alert-success text-center' role='alert'>Registro exitoso!!</div>";
-                $_SESSION['usuario_id'] = mysqli_insert_id($conn);
-                $_SESSION['usuario_nombre'] = $nombre;
-                $_SESSION['usuario_rol'] = 1;
-                
-                echo "<div class='alert alert-success text-center' role='alert'> Registro exitoso!! Redirigiendo...</div>";
-                echo "<script> setTimeout(function() { window.location.href = 'index.php'; }, 2000); </script>";
-                exit();
-            
-            } else {
-                echo "<div class='alert alert-danger text-center' role='alert'>Error al registrar el usuario</div>";
-            }
-            
-            
-        } else {
-            echo "<div class='alert alert-danger text-center' role='alert'>El usuario ya existe!!</div>";
-        }
+    if (!validarContrasena($contrasena)) {
+        $mensaje = "La contraseña debe tener al menos 12 caracteres, una mayúscula, una minúscula, un número y un símbolo.";
     } else {
-        echo "<div class='alert alert-danger text-center' role='alert'>Error de conexión a la base de datos</div>";
+        if ($conn) {
+            // Verificar si el correo ya existe
+            $stmt = $conn->prepare("SELECT id FROM usuarios WHERE email = ?");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $stmt->store_result();
+
+            if ($stmt->num_rows > 0) {
+                $mensaje = "El correo electrónico ya está registrado.";
+            } else {
+                // Insertar nuevo usuario con contraseña hasheada
+                $hash = password_hash($contrasena, PASSWORD_BCRYPT, ["cost" => 12]);
+
+                $stmt = $conn->prepare("INSERT INTO usuarios (nombre, email, contrasena, rol_id) VALUES (?, ?, ?, 2)");
+                $stmt->bind_param("sss", $nombre, $email, $hash);
+                if ($stmt->execute()) {
+                    $mensaje = "Registro exitoso. Ya puedes iniciar sesión.";
+                } else {
+                    $mensaje = "Error al registrar usuario.";
+                }
+            }
+        } else {
+            $mensaje = "Error de conexión con la base de datos.";
+        }
     }
 }
-
 ?>
 
 <body class="bg-light">
     <div class="container">
         <div class="row justify-content-center align-items-center min-vh-100">
-            <form class="col-sm-6 border p-4 rounded shadow bg-white" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
-                <h2 class="text-center mb-4">Regístrate</h2>
+            <form class="col-sm-6 border p-4 rounded shadow bg-white" method="POST">
+                <h2 class="text-center mb-4">Registro de Usuario</h2>
 
-                <div class="input-group mb-3">
-                    <span class="input-group-text">
-                        <i class="bi bi-person"></i>
-                    </span>
-                    <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre de usuario" required>
+                <?php if (!empty($mensaje)): ?>
+                    <div class="alert alert-info text-center" role="alert">
+                        <?= htmlspecialchars($mensaje) ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="mb-3">
+                    <label>Nombre</label>
+                    <input type="text" class="form-control" name="nombre" required>
                 </div>
 
-                <div class="input-group mb-3">
-                    <span class="input-group-text">
-                        <i class="bi bi-envelope"></i>
-                    </span>
-                    <input type="email" class="form-control" id="email" name="email" placeholder="Correo electrónico" required>
+                <div class="mb-3">
+                    <label>Correo electrónico</label>
+                    <input type="email" class="form-control" name="email" required>
                 </div>
 
-                <div class="input-group mb-3">
-                    <span class="input-group-text">
-                        <i class="bi bi-key"></i>
-                    </span>
-                    <input type="password" class="form-control" id="contrasena" name="contrasena" placeholder="Contraseña" required>
+                <div class="mb-3">
+                    <label>Contraseña</label>
+                    <input type="password" class="form-control" name="contrasena" required>
+                    <small class="text-muted">Mínimo 12 caracteres, con mayúsculas, minúsculas, números y símbolos.</small>
                 </div>
 
-                <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-success">Registrar</button>
-                </div>
+                <input type="submit" class="btn btn-primary w-100" value="Registrarse">
+
                 <div class="text-center mt-3">
-                    <p>¿Ya tienes una cuenta? <a href="login.php">Inicia sesión</a></p>
+                    <p>¿Ya tienes cuenta? <a href="login.php">Inicia sesión</a></p>
                 </div>
             </form>
         </div>
     </div>
 </body>
-
 
 <?php include "includes/footer.php"; ?>

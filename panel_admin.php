@@ -1,121 +1,109 @@
-<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<?php 
-session_start(); // Inicia la sesión al principio del archivo
+<?php
+session_start();
+include "includes/header.php";
+require_once "includes/db.php";
 
-if (($_SESSION['rol_id'] != 3)) {
-    header("Location: index.php"); 
+if (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 3) {
+    header("Location: index.php");
     exit();
 }
-include "includes/header.php"; ?>
-<?php
 
+function validarContrasena($pwd) {
+    return strlen($pwd) >= 12 &&
+           preg_match('/[A-Z]/', $pwd) &&
+           preg_match('/[a-z]/', $pwd) &&
+           preg_match('/[0-9]/', $pwd) &&
+           preg_match('/[\W]/', $pwd);
+}
 
-if ($_POST && isset($_POST["boton_registrar"])) { //
-    $nombre = htmlspecialchars($_POST["nombre"]);
-    $contrasena = htmlspecialchars($_POST["contrasena"]);
-    $contrasena2 = htmlspecialchars($_POST["contrasena2"]);
-    $email = htmlspecialchars($_POST["email"]);
-    $rol_id = htmlspecialchars($_POST["rol_id"]);
-    $contrasena_codificada = base64_encode($contrasena);
- 
-    //Funcion del email de la validacion
-    function validateEmail($email) {
-        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
-    }
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["boton_registrar"])) {
+    $nombre     = trim($_POST["nombre"]);
+    $email      = trim($_POST["email"]);
+    $contrasena = $_POST["contrasena"];
+    $contrasena2= $_POST["contrasena2"];
+    $rol_id     = (int) $_POST["rol_id"];
 
-    // Consulta para verificar si ya existe un usuario con el mismo nombre de usuario
-    $consultaUsuario = "SELECT nombre FROM usuarios WHERE nombre = '$nombre'";
+    if (empty($nombre) || empty($email) || empty($contrasena) || empty($contrasena2)) {
+        echo "<script>alert('¡Debes rellenar todos los campos!')</script>";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "<script>alert('¡Correo electrónico no válido!')</script>";
+    } elseif ($contrasena !== $contrasena2) {
+        echo "<script>alert('¡Las contraseñas no coinciden!')</script>";
+    } elseif (!validarContrasena($contrasena)) {
+        echo "<script>alert('¡Contraseña insegura! Debe tener al menos 12 caracteres, una mayúscula, una minúscula, un número y un símbolo.')</script>";
+    } else {
+        $stmt1 = $conn->prepare("SELECT id FROM usuarios WHERE nombre = ?");
+        $stmt1->bind_param("s", $nombre);
+        $stmt1->execute();
+        $stmt1->store_result();
 
-    // Consulta para verificar si ya existe un usuario con el mismo correo electrónico
-    $consultaCorreo = "SELECT email FROM usuarios WHERE email = '$email'";
+        $stmt2 = $conn->prepare("SELECT id FROM usuarios WHERE email = ?");
+        $stmt2->bind_param("s", $email);
+        $stmt2->execute();
+        $stmt2->store_result();
 
-    $validacionEmail = validateEmail($email);
-
-    if ($nombre != "" && $contrasena != "" && $contrasena2 != "" && $email != "" ) {
-        // Ejecuto la consulta para el nombre de usuario
-        $resultadoUsuario = mysqli_query($conn, $consultaUsuario);
-
-        // Ejecuto la consulta para el correo electrónico
-        $resultadoCorreo = mysqli_query($conn, $consultaCorreo);
-
-        // Verifica si ya existe un usuario con el mismo nombre de usuario
-        if (mysqli_num_rows($resultadoUsuario) > 0) {
-            echo "<script type='text/javascript'>alert('¡El usuario ya existe!')</script>";
-        } elseif (mysqli_num_rows($resultadoCorreo) > 0) {
-            echo "<script type='text/javascript'>alert('¡El correo electrónico ya está registrado!')</script>";
-        } elseif (!$validacionEmail) {
-            echo "<script type='text/javascript'>alert('¡No es correcto el correo!')</script>"; 
-        } elseif ($contrasena != $contrasena2) {
-            echo "<script type='text/javascript'>alert('¡No son iguales las contraseñas!')</script>";
+        if ($stmt1->num_rows > 0) {
+            echo "<script>alert('¡El usuario ya existe!')</script>";
+        } elseif ($stmt2->num_rows > 0) {
+            echo "<script>alert('¡El correo electrónico ya está registrado!')</script>";
         } else {
-            $query = "INSERT INTO usuarios (nombre, email, contrasena, rol_id) VALUES ('$nombre', '$email', '$contrasena_codificada', '$rol_id')";
-            if (mysqli_query($conn, $query)) {
-                echo "<div class='alert alert-success text-center' role='alert'>Usuario registrado exitosamente.</div>";
+            $hash = password_hash($contrasena, PASSWORD_BCRYPT, ["cost" => 12]);
+            $stmt = $conn->prepare("INSERT INTO usuarios (nombre, email, contrasena, rol_id) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("sssi", $nombre, $email, $hash, $rol_id);
+            if ($stmt->execute()) {
+                echo "<div class='alert alert-success text-center'>Usuario registrado exitosamente.</div>";
             } else {
-                echo "<p class='text-danger'>Error al registrar usuario: " . mysqli_error($conn) . "</p>";
+                echo "<div class='alert alert-danger text-center'>Error al registrar usuario.</div>";
             }
         }
-    } else {
-        echo "<script type='text/javascript'>alert('¡Debes de rellenar todos los campos!')</script>";
-    } 
+    }
 }
 ?>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script>
-    
-    function delUser(id,usuario,cont){
-
-        var result = window.confirm('Estás seguro de eliminar el usuario '+usuario+ '?');
-        if (result == true) {
-
-            $.ajax({
-                url: 'eliminar_usuario.php',
-                method: "POST",
-            
-            data: { id: id},
-            success: function(data) {
-                alert("usuario Borrado");
-                    location.reload();
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error("Ajax request failed: " + textStatus, errorThrown);
-            }
-            });
-        
-        }
+function delUser(id, nombre) {
+    if (confirm("¿Estás seguro de eliminar al usuario '" + nombre + "'?")) {
+        $.post('eliminar_usuario.php', { id: id }, function(response) {
+            alert("Usuario eliminado.");
+            location.reload();
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            console.error("Ajax error:", textStatus, errorThrown);
+        });
     }
-    
+}
 </script>
+
 <div class="container mt-4">
-    <?php //include "barra_admin.php"; ?>
     <div class="header-container text-white p-4 rounded shadow-sm mb-4" style="background-color: #154c79">
         <h1 class="text-center">Panel de administración</h1>
     </div>
     <div id="contenido" class="d-flex justify-content-around">
         <div id="registrar">
-        <div class="container">
+            <div class="container">
                 <div class="header-container text-white p-4 rounded shadow-sm mb-1" style="background-color: #154c79">
                     <h1 class="text-center">Registrar</h1>
                 </div>
                 <form method="POST" class="mt-4">
                     <div class="form-group">
                         <label for="usuario">Nombre</label>
-                        <input type="text" class="form-control" name="nombre" id="nombre" placeholder="Ingresa tu usuario" >
+                        <input type="text" class="form-control" name="nombre" required>
                     </div>
                     <div class="form-group mt-4">
                         <label for="contrasena">Contraseña</label>
-                        <input type="password" class="form-control" name="contrasena" id="contrasena" placeholder="Ingresa tu contraseña" >
+                        <input type="password" class="form-control" name="contrasena" required>
                     </div>
                     <div class="form-group mt-4">
-                        <label for="contrasena">Repetir contraseña</label>
-                        <input type="password" class="form-control" name="contrasena2" id="contrasena2" placeholder="Repite tu contraseña" >
+                        <label for="contrasena2">Repetir contraseña</label>
+                        <input type="password" class="form-control" name="contrasena2" required>
                     </div>
                     <div class="form-group mt-4">
-                        <label for="usuario">Correo</label>
-                        <input type="text" class="form-control" name="email" id="email" placeholder="Ingresa tu correo" >
+                        <label for="email">Correo</label>
+                        <input type="email" class="form-control" name="email" required>
                     </div>
                     <div class="form-group mt-4">
                         <label for="rol_id" class="form-label">Rol</label>
-                        <select name="rol_id" id="rol_id" class="form-control">
+                        <select name="rol_id" class="form-control">
                             <option value="1">Cliente</option>
                             <option value="2">Vendedor</option>
                             <option value="3">Administrador</option>
@@ -136,45 +124,63 @@ if ($_POST && isset($_POST["boton_registrar"])) { //
                     <table id='userTable' class="table table-bordered rounded table-hover custom-table">
                         <thead class="text-white text-center" style="background-color: #154c79">
                             <tr>
-                                <th scope="col"><a href="?ordenar=id">ID</a></th> 
-                                <th scope="col"><a href="?ordenar=nombre">Usuario</a></th>
-                                <th scope="col">Rol</th>
-                                <th scope="col"><a href="?ordenar=email">Correo</a></th>
-                                <th scope="col" colspan="2" class="text-center">Operaciones</th>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Rol</th>
+                                <th>Correo</th>
+                                <th>Cambiar Rol</th>
+                                <th>Eliminar</th>
                             </tr>
                         </thead>
                         <tbody class="text-center">
                             <?php
-                            /////////////////////////
-
-                            $orden = 'id'; // Orden por defecto
-                            $columnasOrdenables = array('id', 'nombre', 'email');
-
+                            $orden = 'id';
+                            $columnasOrdenables = ['id', 'nombre', 'email'];
                             if (isset($_GET['ordenar']) && in_array($_GET['ordenar'], $columnasOrdenables)) {
                                 $orden = $_GET['ordenar'];
                             }
 
-                            ///////////////////////////
                             $miUsuario = $_SESSION['nombre'];
-                            $query = "SELECT * FROM usuarios WHERE nombre != '$miUsuario' ORDER BY $orden ASC";
-                            // Ejecutar la consulta
-          
-                            $result = mysqli_query($conn, $query);
-                            $cont = 0;
-                            while ($row = mysqli_fetch_assoc($result)) {
-                                $id = $row['id'];
-                                $nombre = $row['nombre'];
-                                $rol_id = $row['rol_id'];
-                                $email = $row['email'];
+                            $query = "SELECT u.id, u.nombre, u.email, u.rol_id, r.nombre_rol 
+                                      FROM usuarios u 
+                                      LEFT JOIN roles r ON u.rol_id = r.id 
+                                      WHERE u.nombre != ? 
+                                      ORDER BY $orden ASC";
 
-                                echo "<tr id='userRow{$id}'>";
+                            $stmt = $conn->prepare($query);
+                            $stmt->bind_param("s", $miUsuario);
+                            $stmt->execute();
+                            $result = $stmt->get_result();
+
+                            while ($row = $result->fetch_assoc()) {
+                                $id = $row['id'];
+                                $nombre = htmlspecialchars($row['nombre']);
+                                $email = htmlspecialchars($row['email']);
+                                $rol_id = $row['rol_id'];
+                                $nombre_rol = $row['nombre_rol'];
+
+                                echo "<tr>";
                                 echo "<td>{$id}</td>";
                                 echo "<td>{$nombre}</td>";
-                                echo "<td>{$rol_id}</td>";  
-                                echo "<td>{$email}</td>";  
-                                echo "<td class='text-center'><a onclick=\"delUser('{$id}','{$usuario}','{$cont}')\" class='btn btn-danger'><i class='bi bi-trash'></i> Eliminar</a></td>";
+                                echo "<td>{$nombre_rol}</td>";
+                                echo "<td>{$email}</td>";
+                                echo "<td>
+                                        <form method='POST' action='actualizar_rol.php'>
+                                            <input type='hidden' name='id' value='{$id}'>
+                                            <select name='nuevo_rol' class='form-select form-select-sm'>";
+
+                                $roles = [1 => 'Cliente', 2 => 'Vendedor', 3 => 'Administrador'];
+                                foreach ($roles as $rid => $rnombre) {
+                                    $selected = $rol_id == $rid ? "selected" : "";
+                                    echo "<option value='{$rid}' {$selected}>{$rnombre}</option>";
+                                }
+
+                                echo "        </select>
+                                            <button type='submit' class='btn btn-sm btn-primary mt-1'>Cambiar</button>
+                                        </form>
+                                      </td>";
+                                echo "<td><a onclick=\"delUser('{$id}','{$nombre}')\" class='btn btn-danger btn-sm'><i class='bi bi-trash'></i> Eliminar</a></td>";
                                 echo "</tr>";
-                                $cont++;
                             }
                             ?>
                         </tbody>
@@ -183,14 +189,10 @@ if ($_POST && isset($_POST["boton_registrar"])) { //
             </div>
         </div>  
     </div>
-    
 </div>
-
 
 <div class="container text-center mt-5">
     <a href="index.php" class="btn btn-warning mb-5">Volver</a>
 </div>
-
-
 
 <?php include "includes/footer.php"; ?>
