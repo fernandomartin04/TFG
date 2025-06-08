@@ -15,35 +15,27 @@ unset($_SESSION['errores_formulario'], $_SESSION['datos_formulario']);
             <label for="nombre" class="form-label">Nombre completo</label>
             <input type="text" class="form-control <?= isset($errores['nombre']) ? 'is-invalid' : '' ?>" id="nombre" name="nombre"
                    value="<?= htmlspecialchars($datos['nombre'] ?? '') ?>" required>
-            <?php if (isset($errores['nombre'])): ?>
-                <div class="invalid-feedback"><?= $errores['nombre'] ?></div>
-            <?php endif; ?>
+            <div class="invalid-feedback"><?= $errores['nombre'] ?? '' ?></div>
         </div>
 
         <div class="mb-3">
-            <label for="direccion" class="form-label">Dirección de envío</label>
+            <label for="direccion" class="form-label">Dirección</label>
             <textarea class="form-control <?= isset($errores['direccion']) ? 'is-invalid' : '' ?>" id="direccion" name="direccion" required><?= htmlspecialchars($datos['direccion'] ?? '') ?></textarea>
-            <?php if (isset($errores['direccion'])): ?>
-                <div class="invalid-feedback"><?= $errores['direccion'] ?></div>
-            <?php endif; ?>
+            <div class="invalid-feedback"><?= $errores['direccion'] ?? '' ?></div>
         </div>
 
         <div class="mb-3">
             <label for="telefono" class="form-label">Teléfono</label>
             <input type="text" class="form-control <?= isset($errores['telefono']) ? 'is-invalid' : '' ?>" id="telefono" name="telefono"
                    value="<?= htmlspecialchars($datos['telefono'] ?? '') ?>" required>
-            <?php if (isset($errores['telefono'])): ?>
-                <div class="invalid-feedback"><?= $errores['telefono'] ?></div>
-            <?php endif; ?>
+            <div class="invalid-feedback"><?= $errores['telefono'] ?? '' ?></div>
         </div>
 
         <div class="mb-3">
             <label for="email" class="form-label">Correo electrónico (opcional)</label>
             <input type="email" class="form-control <?= isset($errores['email']) ? 'is-invalid' : '' ?>" id="email" name="email"
                    value="<?= htmlspecialchars($datos['email'] ?? '') ?>">
-            <?php if (isset($errores['email'])): ?>
-                <div class="invalid-feedback"><?= $errores['email'] ?></div>
-            <?php endif; ?>
+            <div class="invalid-feedback"><?= $errores['email'] ?? '' ?></div>
         </div>
 
         <div class="mb-3">
@@ -54,11 +46,11 @@ unset($_SESSION['errores_formulario'], $_SESSION['datos_formulario']);
                 <option value="paypal" <?= ($datos['metodo_pago'] ?? '') === 'paypal' ? 'selected' : '' ?>>PayPal</option>
                 <option value="transferencia" <?= ($datos['metodo_pago'] ?? '') === 'transferencia' ? 'selected' : '' ?>>Transferencia</option>
             </select>
-            <?php if (isset($errores['metodo_pago'])): ?>
-                <div class="invalid-feedback"><?= $errores['metodo_pago'] ?></div>
-            <?php endif; ?>
+            <div class="invalid-feedback"><?= $errores['metodo_pago'] ?? '' ?></div>
         </div>
 
-        <button type="submit" class="btn btn-primary">Confirmar pedido</button>
+        <button type="submit" class="btn btn-success">Confirmar pedido</button>
     </form>
 </div>
+
+<?php include "includes/footer.php"; ?>

@@ -57,96 +57,140 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["boton_registrar"])) {
         }
     }
 }
+
+$miUsuario = $_SESSION['nombre'];
+$queryUsuarios = "SELECT u.id, u.nombre, u.email, u.rol_id, r.nombre_rol 
+                  FROM usuarios u 
+                  LEFT JOIN roles r ON u.rol_id = r.id 
+                  WHERE u.nombre != ? 
+                  ORDER BY u.id ASC";
+$stmtUsuarios = $conn->prepare($queryUsuarios);
+$stmtUsuarios->bind_param("s", $miUsuario);
+$stmtUsuarios->execute();
+$resultUsuarios = $stmtUsuarios->get_result();
+
+$queryCupones = "SELECT * FROM cupones ORDER BY id DESC";
+$resultCupones = $conn->query($queryCupones);
 ?>
 
 <style>
 .admin-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 40px auto;
     padding: 0 15px;
+    font-family: Arial, sans-serif;
 }
-
 .admin-header {
-    background-color: #212529; /* navbar oscuro */
+    background-color: #212529;
     color: #f8f9fa;
     padding: 1rem;
     border-radius: 0.25rem;
     margin-bottom: 1.5rem;
     text-align: center;
     font-weight: 600;
+    font-size: 1.8rem;
 }
-
 .admin-content {
     display: flex;
     gap: 2rem;
+    align-items: flex-start;
     flex-wrap: nowrap;
-    justify-content: space-between;
 }
-
-.admin-register {
-    flex: 0 1 28%;
+.admin-left-column {
+    flex: 0 1 40%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+.admin-register, .admin-cupones {
     background: #f8f9fa;
     padding: 1.5rem;
     border-radius: 0.25rem;
     box-shadow: 0 0 12px rgb(0 0 0 / 0.1);
+    max-height: none;
+    overflow-y: visible;
 }
-
+.admin-register h2, .admin-cupones h2 {
+    color: #154c79;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
 .admin-users {
-    flex: 0 1 70%;
+    flex: 1 1 58%;
     background: #f8f9fa;
     padding: 1rem;
     border-radius: 0.25rem;
     box-shadow: 0 0 12px rgb(0 0 0 / 0.1);
-    overflow-x: hidden; /* ocultamos scroll horizontal */
+    overflow-x: auto;
+    overflow-y: visible;
 }
-
-.admin-users table {
+.admin-users h2 {
+    color: #154c79;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85rem;
-    table-layout: fixed; /* fuerza ancho fijo */
+    font-size: 0.9rem;
+    table-layout: fixed;
+    min-width: 750px;
 }
-
-.admin-users th, .admin-users td {
-    padding: 0.5rem 0.4rem;
+th, td {
+    padding: 0.5rem 0.6rem;
     border: 1px solid #dee2e6;
     text-align: center;
     vertical-align: middle;
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
-
-.admin-users th {
-    background-color: #154c79; /* color azul sobrio de la web */
+th {
+    background-color: #154c79;
     color: #f8f9fa;
     white-space: nowrap;
+    font-weight: 600;
 }
-
-.admin-users select.form-select {
+form select.form-select, form input.form-control {
     width: 100%;
-    display: block;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.3rem;
     font-size: 0.85rem;
 }
-
-.admin-users button.btn-sm {
+button.btn, button.btn-sm {
+    background-color: #154c79;
+    border-color: #154c79;
+    color: #fff;
     width: 100%;
     font-size: 0.85rem;
     padding: 0.25rem 0;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
 }
-
-.admin-users a.btn-danger {
-    white-space: nowrap;
-    font-size: 0.85rem;
+button.btn:hover, button.btn-sm:hover {
+    background-color: #0d3053;
+    border-color: #0d3053;
+}
+a.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #fff !important;
     padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    border-radius: 3px;
+    display: inline-block;
+    cursor: pointer;
+    text-decoration: none;
 }
-
-/* Responsive */
+a.btn-danger:hover {
+    background-color: #b02a37;
+    border-color: #b02a37;
+    color: #fff !important;
+}
 @media (max-width: 768px) {
     .admin-content {
         flex-direction: column;
     }
-    .admin-register, .admin-users {
+    .admin-left-column, .admin-users {
         flex: 1 1 100%;
         margin-bottom: 1.5rem;
     }
@@ -154,43 +198,103 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["boton_registrar"])) {
 </style>
 
 <div class="admin-container">
-    <div class="admin-header">
-        <h1>Panel de administración</h1>
-    </div>
+    <div class="admin-header">Panel de administración</div>
     <div class="admin-content">
-        <div class="admin-register">
-            <h2 class="mb-4 text-primary text-center" style="color: #154c79;">Registrar nuevo usuario</h2>
-            <form method="POST" novalidate>
-                <div class="mb-3">
+        <div class="admin-left-column">
+            <!-- Formulario Registro Usuario -->
+            <div class="admin-register">
+                <h2>Registrar nuevo usuario</h2>
+                <form method="POST" novalidate>
                     <label for="nombre" class="form-label">Nombre</label>
                     <input id="nombre" name="nombre" type="text" class="form-control" required>
-                </div>
-                <div class="mb-3">
+
                     <label for="email" class="form-label">Correo electrónico</label>
                     <input id="email" name="email" type="email" class="form-control" required>
-                </div>
-                <div class="mb-3">
+
                     <label for="contrasena" class="form-label">Contraseña</label>
                     <input id="contrasena" name="contrasena" type="password" class="form-control" required>
-                    <small class="form-text text-muted">Mínimo 12 caracteres, con mayúsculas, minúsculas, números y símbolos.</small>
-                </div>
-                <div class="mb-3">
+                    <small class="form-text text-muted mb-3">Mínimo 12 caracteres, con mayúsculas, minúsculas, números y símbolos.</small>
+
                     <label for="contrasena2" class="form-label">Repetir contraseña</label>
                     <input id="contrasena2" name="contrasena2" type="password" class="form-control" required>
-                </div>
-                <div class="mb-3">
+
                     <label for="rol_id" class="form-label">Rol</label>
                     <select id="rol_id" name="rol_id" class="form-select" required>
                         <option value="1">Cliente</option>
                         <option value="2">Vendedor</option>
                         <option value="3">Administrador</option>
                     </select>
-                </div>
-                <button name="boton_registrar" type="submit" class="btn" style="background-color: #154c79; color: white; width: 100%;">Registrar</button>
-            </form>
+
+                    <button name="boton_registrar" type="submit" class="btn mt-3">Registrar</button>
+                </form>
+            </div>
+
+            <!-- Gestión Cupones -->
+            <div class="admin-cupones">
+                <h2>Gestión de Cupones</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Código</th>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                            <th>Fecha inicio</th>
+                            <th>Fecha fin</th>
+                            <th>Activo</th>
+                            <th>Eliminar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while($cupon = $resultCupones->fetch_assoc()): ?>
+                        <tr>
+                            <td><?= $cupon['id'] ?></td>
+                            <td><?= htmlspecialchars($cupon['codigo']) ?></td>
+                            <td><?= htmlspecialchars($cupon['tipo']) ?></td>
+                            <td><?= htmlspecialchars($cupon['valor']) ?></td>
+                            <td><?= htmlspecialchars($cupon['fecha_inicio']) ?></td>
+                            <td><?= htmlspecialchars($cupon['fecha_fin']) ?></td>
+                            <td><?= $cupon['activo'] ? 'Sí' : 'No' ?></td>
+                            <td><a href="eliminar_cupon.php?id=<?= $cupon['id'] ?>" class="btn btn-danger">Eliminar</a></td>
+                        </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+
+                <!-- Formulario para crear nuevo cupón -->
+                <form method="POST" action="crear_cupon.php" class="mt-4">
+                    <h3 class="mb-3">Crear nuevo cupón</h3>
+                    <label for="codigo" class="form-label">Código</label>
+                    <input type="text" id="codigo" name="codigo" class="form-control" required>
+
+                    <label for="tipo" class="form-label">Tipo</label>
+                    <select name="tipo" id="tipo" class="form-select" required>
+                        <option value="porcentaje">Porcentaje</option>
+                        <option value="cantidad">Cantidad fija</option>
+                    </select>
+
+                    <label for="valor" class="form-label">Valor</label>
+                    <input type="number" step="0.01" id="valor" name="valor" class="form-control" required>
+
+                    <label for="fecha_inicio" class="form-label">Fecha inicio</label>
+                    <input type="date" id="fecha_inicio" name="fecha_inicio" class="form-control" required>
+
+                    <label for="fecha_fin" class="form-label">Fecha fin</label>
+                    <input type="date" id="fecha_fin" name="fecha_fin" class="form-control" required>
+
+                    <div class="form-check mt-3 mb-3">
+                        <input type="checkbox" id="activo" name="activo" class="form-check-input" checked>
+                        <label for="activo" class="form-check-label">Activo</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Crear cupón</button>
+                </form>
+            </div>
         </div>
+
+        <!-- Usuarios existentes -->
         <div class="admin-users">
-            <h2 class="mb-4 text-primary text-center" style="color: #154c79;">Usuarios existentes</h2>
+            <h2>Usuarios existentes</h2>
             <table>
                 <thead>
                     <tr>
@@ -204,25 +308,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["boton_registrar"])) {
                 </thead>
                 <tbody>
                     <?php
-                    $orden = 'id';
-                    $columnasOrdenables = ['id', 'nombre', 'email'];
-                    if (isset($_GET['ordenar']) && in_array($_GET['ordenar'], $columnasOrdenables)) {
-                        $orden = $_GET['ordenar'];
-                    }
-
-                    $miUsuario = $_SESSION['nombre'];
-                    $query = "SELECT u.id, u.nombre, u.email, u.rol_id, r.nombre_rol 
-                              FROM usuarios u 
-                              LEFT JOIN roles r ON u.rol_id = r.id 
-                              WHERE u.nombre != ? 
-                              ORDER BY $orden ASC";
-
-                    $stmt = $conn->prepare($query);
-                    $stmt->bind_param("s", $miUsuario);
-                    $stmt->execute();
-                    $result = $stmt->get_result();
-
-                    while ($row = $result->fetch_assoc()) {
+                    while ($row = $resultUsuarios->fetch_assoc()) {
                         $id = $row['id'];
                         $nombre = htmlspecialchars($row['nombre']);
                         $email = htmlspecialchars($row['email']);
@@ -244,10 +330,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["boton_registrar"])) {
                             echo "<option value='{$rid}' {$selected}>{$rnombre}</option>";
                         }
                         echo "        </select>
-                                    <button type='submit' class='btn btn-sm btn-primary mt-1' style='background-color: #154c79; border-color: #154c79;'>Cambiar</button>
+                                    <button type='submit' class='btn btn-sm mt-1'>Cambiar</button>
                                 </form>
                               </td>";
-                        echo "<td><a onclick=\"delUser('{$id}','{$nombre}')\" class='btn btn-danger btn-sm'><i class='bi bi-trash'></i> Eliminar</a></td>";
+                        echo "<td><a onclick=\"delUser('{$id}','{$nombre}')\" class='btn btn-danger'><i class='bi bi-trash'></i> Eliminar</a></td>";
                         echo "</tr>";
                     }
                     ?>

@@ -1,27 +1,43 @@
-include "includes/header.php";
 <?php
+session_start();
 require "includes/db.php";
 
-if (!isset($_SESSION['id'])) {
-    header("Location: login.php");
-    exit();
+$usuario_id   = $_SESSION['usuario_id'] ?? null;
+$producto_id  = isset($_POST['producto_id']) ? intval($_POST['producto_id']) : 0;
+$nueva_talla  = $_POST['talla'] ?? '';
+
+$tallas_validas = ['XS', 'S', 'M', 'L', 'XL'];
+
+if ($producto_id > 0 && in_array($nueva_talla, $tallas_validas)) {
+    // Verificamos si hay stock suficiente para esa talla
+    $stmt = $conn->prepare("SELECT stock FROM stock_productos_tallas WHERE producto_id = ? AND talla = ?");
+    $stmt->bind_param("is", $producto_id, $nueva_talla);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+
+    if ($row && $row['stock'] > 0) {
+        // ✅ Si hay stock, actualizamos la talla
+        if ($usuario_id) {
+            $stmt = $conn->prepare("UPDATE carritos SET talla = ? WHERE usuario_id = ? AND producto_id = ?");
+            $stmt->bind_param("sii", $nueva_talla, $usuario_id, $producto_id);
+            $stmt->execute();
+        } else {
+            if (!empty($_SESSION['carrito'])) {
+                foreach ($_SESSION['carrito'] as &$item) {
+                    if ($item['producto_id'] == $producto_id) {
+                        $item['talla'] = $nueva_talla;
+                        break;
+                    }
+                }
+                unset($item);
+            }
+        }
+    } else {
+        // ❌ No hay stock → redirigimos con mensaje
+        $_SESSION['error_carrito'] = "No hay stock disponible para la talla seleccionada.";
+    }
 }
-
-$carrito_id = $_POST['carrito_id'] ?? null;
-$nueva_talla = $_POST['nueva_talla'] ?? null;
-$usuario_id = $_SESSION['id'];
-
-if (!$carrito_id || !$nueva_talla) {
-    header("Location: carrito.php");
-    exit();
-}
-
-// Verificamos que el item pertenezca al usuario antes de actualizar
-$sql = "UPDATE carritos SET talla = ? WHERE id = ? AND usuario_id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("sii", $nueva_talla, $carrito_id, $usuario_id);
-$stmt->execute();
 
 header("Location: carrito.php");
 exit();
-?>

@@ -18,10 +18,11 @@ if (isset($_POST['guardar'])) {
         exit;
     }
 
-    // Datos del fichero subido
+    // Validación de imagen
     $imagen_original  = $_FILES['imagen']['name'];
     $imagen_temporal  = $_FILES['imagen']['tmp_name'];
     $imagen_error     = $_FILES['imagen']['error'];
+    $imagen_tamano    = $_FILES['imagen']['size'];
     $extension        = strtolower(pathinfo($imagen_original, PATHINFO_EXTENSION));
 
     // 1) Comprobamos si hubo error en la carga
@@ -30,21 +31,42 @@ if (isset($_POST['guardar'])) {
         exit;
     }
 
-    // 2) Validamos extensión
+    // 2) Validamos extensión permitida
     $extensiones_permitidas = ['jpg', 'jpeg', 'png', 'webp'];
     if (!in_array($extension, $extensiones_permitidas)) {
         echo "<div class='container mt-4 alert alert-danger'>Formato de imagen no permitido.</div>";
         exit;
     }
 
-    // 3) Movemos la imagen
-    $nuevo_nombre_imagen = uniqid() . '.' . $extension;
-    move_uploaded_file($imagen_temporal, "imagenes/" . $nuevo_nombre_imagen);
+    // 3) Validamos tipo MIME real
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = finfo_file($finfo, $imagen_temporal);
+    finfo_close($finfo);
+    $mime_permitidos = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!in_array($mime, $mime_permitidos)) {
+        echo "<div class='container mt-4 alert alert-danger'>Tipo de archivo no permitido.</div>";
+        exit;
+    }
 
-    // 4) Insertamos en la base de datos de forma segura
+    // 4) Validamos tamaño máximo (2MB)
+    if ($imagen_tamano > 2 * 1024 * 1024) {
+        echo "<div class='container mt-4 alert alert-danger'>El archivo excede el tamaño permitido (2MB).</div>";
+        exit;
+    }
+
+    // 5) Movemos la imagen
+    $nuevo_nombre_imagen = uniqid() . '.' . $extension;
+    $ruta_imagen = 'img/' . $nuevo_nombre_imagen;
+
+    if (!move_uploaded_file($imagen_temporal, $ruta_imagen)) {
+        echo "<div class='container mt-4 alert alert-danger'>Error al guardar la imagen en el servidor.</div>";
+        exit;
+    }
+
+    // 6) Insertamos en la base de datos
     $stmt = $conn->prepare("INSERT INTO productos (nombre, descripcion, precio, imagen, fecha_creacion, id_vendedor) VALUES (?, ?, ?, ?, NOW(), ?)");
-    $stmt->bind_param("ssdsi", $nombre, $descripcion, $precio, $nuevo_nombre_imagen, $_SESSION['usuario_id']);
-    
+    $stmt->bind_param("ssdsi", $nombre, $descripcion, $precio, $ruta_imagen, $_SESSION['usuario_id']);
+
     if ($stmt->execute()) {
         echo "<div class='container mt-4 alert alert-success'>Producto añadido correctamente.</div>";
     } else {

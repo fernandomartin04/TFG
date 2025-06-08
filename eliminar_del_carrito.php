@@ -1,21 +1,30 @@
-include "includes/header.php";
 <?php
+session_start();
 require "includes/db.php";
 
-if (!isset($_SESSION['id'])) {
-    header("Location: login.php");
-    exit();
-}
-
-$usuario_id = $_SESSION['id'];
-$producto_id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+$usuario_id   = $_SESSION['usuario_id'] ?? null;
+$producto_id  = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+$talla        = isset($_GET['talla']) ? $_GET['talla'] : '';
 
 if ($producto_id > 0) {
-    $stmt = $conn->prepare("DELETE FROM carritos WHERE usuario_id = ? AND producto_id = ?");
-    $stmt->bind_param("ii", $usuario_id, $producto_id);
-    $stmt->execute();
+    if ($usuario_id) {
+        // 🟢 Usuario logueado → eliminar de la base de datos
+        $stmt = $conn->prepare("DELETE FROM carritos WHERE usuario_id = ? AND producto_id = ? AND talla = ?");
+        $stmt->bind_param("iis", $usuario_id, $producto_id, $talla);
+        $stmt->execute();
+    } else {
+        // 🟡 Usuario no logueado → eliminar de $_SESSION['carrito']
+        if (!empty($_SESSION['carrito'])) {
+            foreach ($_SESSION['carrito'] as $index => $item) {
+                if ($item['producto_id'] == $producto_id && $item['talla'] === $talla) {
+                    unset($_SESSION['carrito'][$index]);
+                    $_SESSION['carrito'] = array_values($_SESSION['carrito']); // Reindexar
+                    break;
+                }
+            }
+        }
+    }
 }
 
 header("Location: carrito.php");
 exit();
-?>

@@ -1,5 +1,5 @@
 <?php
-// Mostrar errores para depurar
+// Mostrar errores para depuración
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -23,7 +23,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $usuario = $res->fetch_assoc();
 
             if (password_verify($password, $usuario['contrasena'])) {
-                // Guardamos los datos en la sesión
+                // ✅ Regenerar ID de sesión tras autenticación exitosa
+                session_regenerate_id(true);
+
+                // Guardar datos del usuario en la sesión
                 $_SESSION['usuario_id'] = $usuario['id'];
                 $_SESSION['nombre']     = $usuario['nombre'];
                 $_SESSION['rol_id']     = $usuario['rol_id'];
@@ -46,9 +49,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <div class="container mt-5">
     <h2>Iniciar sesión</h2>
+
     <?php if (!empty($error)): ?>
-        <div class="alert alert-danger"><?= $error ?></div>
+        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
+
     <form method="post">
         <div class="mb-3">
             <label for="nombre" class="form-label">Nombre de usuario:</label>
@@ -60,4 +65,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </div>
         <button type="submit" class="btn btn-primary">Iniciar sesión</button>
     </form>
+
+    <div class="mt-3">
+        <a href="recuperar.php" class="text-decoration-none">¿Has olvidado tu contraseña?</a>
+    </div>
 </div>
+
+<?php include "includes/footer.php"; ?>
