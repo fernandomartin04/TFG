@@ -1,5 +1,5 @@
+include "includes/header.php";
 <?php
-session_start();
 require "includes/db.php";
 
 if (!isset($_SESSION['id'])) {
@@ -7,14 +7,21 @@ if (!isset($_SESSION['id'])) {
     exit();
 }
 
-$carrito_id = isset($_POST['carrito_id']) ? (int) $_POST['carrito_id'] : 0;
-$nueva_talla = isset($_POST['talla']) ? $_POST['talla'] : null;
+$carrito_id = $_POST['carrito_id'] ?? null;
+$nueva_talla = $_POST['nueva_talla'] ?? null;
+$usuario_id = $_SESSION['id'];
 
-if ($carrito_id > 0) {
-    $stmt = $conn->prepare("UPDATE carritos SET talla = ? WHERE id = ?");
-    $stmt->bind_param("si", $nueva_talla, $carrito_id);
-    $stmt->execute();
+if (!$carrito_id || !$nueva_talla) {
+    header("Location: carrito.php");
+    exit();
 }
+
+// Verificamos que el item pertenezca al usuario antes de actualizar
+$sql = "UPDATE carritos SET talla = ? WHERE id = ? AND usuario_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("sii", $nueva_talla, $carrito_id, $usuario_id);
+$stmt->execute();
 
 header("Location: carrito.php");
 exit();
+?>

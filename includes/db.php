@@ -1,20 +1,18 @@
 <?php
-$servername = 'sql202.infinityfree.com';   
-$username = 'if0_38587556';   
-$password = "PedroS4nche";   
-$dbname = 'if0_38587556_tfg_fer';
+// Habilitar errores detallados (puedes quitarlo en producción)
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+// Parámetros de conexión
+$servername = 'db5017984678.hosting-data.io';
+$username   = 'dbu657666';
+$password   = 'MegustaelMineclaft25';
+$dbname     = 'dbs14302116';
 
 // Crear conexión
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// Verificar conexión
-if ($conn->connect_error) {                                             
-    die("❌ Conexión fallida: " . $conn->connect_error);     
-}
+// Establecer codificación para compatibilidad completa (incluye emojis, etc.)
+$conn->set_charset("utf8mb4");
 
-// Establezco codificación para caracteres especiales
-$conn->set_charset("utf8"); 
-
-// Mensaje para pruebas
-//echo "✅ Conexión exitosa a la base de datos";
+// Ya está conectada la BD. No mostramos mensajes aquí para no romper cabeceras HTML.
 ?>

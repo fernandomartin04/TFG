@@ -1,5 +1,5 @@
+include "includes/header.php";
 <?php
-session_start();
 require "includes/db.php";
 
 if (!isset($_SESSION['id'])) {

@@ -1,79 +1,63 @@
 <?php
+// Mostrar errores para depurar
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+require "includes/db.php";
 session_start();
-include "includes/header.php"; // Incluye conexión a BD
 
-$mensaje = "";
+$error = "";
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $nombre = trim($_POST["nombre"]);
-    $contrasena = $_POST["contrasena"];
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $nombre = trim($_POST['nombre']);
+    $password = $_POST['password'];
 
-    if ($conn) {
-        // Consulta preparada segura para evitar inyección SQL
-        $stmt = $conn->prepare("SELECT id, nombre, email, contrasena, rol_id FROM usuarios WHERE nombre = ? OR email = ?");
-        $stmt->bind_param("ss", $nombre, $nombre);
+    if (!empty($nombre) && !empty($password)) {
+        $stmt = $conn->prepare("SELECT id, nombre, contrasena, rol_id FROM usuarios WHERE nombre = ?");
+        $stmt->bind_param("s", $nombre);
         $stmt->execute();
-        $resultado = $stmt->get_result();
+        $res = $stmt->get_result();
 
-        if ($resultado->num_rows === 1) {
-            $row = $resultado->fetch_assoc();
+        if ($res->num_rows === 1) {
+            $usuario = $res->fetch_assoc();
 
-            // Verifica la contraseña hasheada
-            if (password_verify($contrasena, $row['contrasena'])) {
-                $_SESSION['id'] = $row['id'];
-                $_SESSION['nombre'] = $row['nombre'];
-                $_SESSION['rol_id'] = $row['rol_id'];
+            if (password_verify($password, $usuario['contrasena'])) {
+                // Guardamos los datos en la sesión
+                $_SESSION['usuario_id'] = $usuario['id'];
+                $_SESSION['nombre']     = $usuario['nombre'];
+                $_SESSION['rol_id']     = $usuario['rol_id'];
 
                 header("Location: index.php");
                 exit();
             } else {
-                $mensaje = "Usuario o contraseña incorrectos.";
+                $error = "Contraseña incorrecta.";
             }
         } else {
-            $mensaje = "Usuario o contraseña incorrectos.";
+            $error = "No se encontró ningún usuario con ese nombre.";
         }
     } else {
-        $mensaje = "Error de conexión a la base de datos.";
+        $error = "Debes completar todos los campos.";
     }
 }
 ?>
 
-<body class="bg-light">
-    <div class="container">
-        <div class="row justify-content-center align-items-center min-vh-100">
-            <form class="col-sm-6 border p-4 rounded shadow bg-white" action="<?= htmlspecialchars($_SERVER["PHP_SELF"]) ?>" method="post">
-                <h2 class="text-center mb-4">Iniciar Sesión</h2>
+<?php include "includes/header.php"; ?>
 
-                <?php if (!empty($mensaje)): ?>
-                    <div class='alert alert-danger text-center' role='alert'>
-                        <?= htmlspecialchars($mensaje) ?>
-                    </div>
-                <?php endif; ?>
-
-                <div class="input-group mb-3">
-                    <span class="input-group-text">
-                        <i class="bi bi-person"></i>
-                    </span>
-                    <input type="text" class="form-control" name="nombre" placeholder="Usuario o Correo Electrónico" required>
-                </div>
-
-                <div class="input-group mb-3">
-                    <span class="input-group-text">
-                        <i class="bi bi-key"></i>
-                    </span>
-                    <input type="password" class="form-control" name="contrasena" placeholder="Contraseña" required>
-                </div>
-
-                <div class="d-flex justify-content-between">
-                    <input type="submit" class="btn btn-success" value="Iniciar Sesión">
-                </div>
-
-                <div class="text-center mt-3">
-                    <p>¿No tienes cuenta? <a href="registro.php">Regístrate aquí</a></p>
-                </div>
-            </form>
+<div class="container mt-5">
+    <h2>Iniciar sesión</h2>
+    <?php if (!empty($error)): ?>
+        <div class="alert alert-danger"><?= $error ?></div>
+    <?php endif; ?>
+    <form method="post">
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre de usuario:</label>
+            <input type="text" class="form-control" name="nombre" id="nombre" required>
         </div>
-    </div>
-</body>
-
-<?php include "includes/footer.php"; ?>
+        <div class="mb-3">
+            <label for="password" class="form-label">Contraseña:</label>
+            <input type="password" class="form-control" name="password" id="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+    </form>
+</div>

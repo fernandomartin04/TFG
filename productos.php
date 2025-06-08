@@ -1,69 +1,114 @@
-<?php 
-include "includes/header.php";
+<?php
+include 'includes/header.php';
+require 'includes/db.php';
 
-// Consultar todos los productos
-$busqueda = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';
-if (!empty($busqueda)) {
-    $busqueda = mysqli_real_escape_string($conn, $busqueda);
-    $query = "SELECT * FROM productos WHERE nombre LIKE '%$busqueda%'";
-} else {
-    $query = "SELECT * FROM productos";
-}
-
-$resultado = mysqli_query($conn, $query);
-
-if (!$resultado) {
-    echo "<div class='container mt-4 alert alert-danger'>Error al obtener los productos: " . mysqli_error($conn) . "</div>";
-    exit();
-}
+$query = "SELECT * FROM productos";
+$result = mysqli_query($conn, $query);
 ?>
 
-<style>
-    .producto-card {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UrbanWear - Productos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container#productos {
+            padding-top: 40px;
+            padding-bottom: 60px;
+        }
+        h2 {
+            letter-spacing: 2px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            text-align: center;
+            color: #333;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        .card-img-top {
+            height: 260px;
+            object-fit: cover;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+        .card-body {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.7rem;
+            color: #333;
+        }
+        .card-text {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 1.3rem;
+            min-height: 3.2rem;
+        }
+        .btn-custom {
+            background-color: #ff6600;
+            color: white;
+            font-weight: 600;
+            padding: 12px 30px;
+            border-radius: 30px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 10px rgba(255,102,0,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-custom:hover {
+            background-color: #e65c00;
+            box-shadow: 0 6px 14px rgba(230,92,0,0.6);
+            color: white;
+            text-decoration: none;
+        }
+        @media (max-width: 768px) {
+            .card-img-top {
+                height: 220px;
+            }
+        }
+    </style>
+</head>
+<body>
 
-    .producto-card img {
-        height: 250px;
-        object-fit: cover;
-    }
-
-    .producto-card .card-body {
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-    }
-</style>
-
-<div class="container mt-5 mb-5">
-    <h2 class="mb-4">Productos</h2>
-    <form method="GET" class="mb-4">
-        <div class="input-group">
-            <input type="text" name="busqueda" class="form-control" placeholder="Buscar productos..." value="<?php echo isset($_GET['busqueda']) ? htmlspecialchars($_GET['busqueda']) : ''; ?>">
-            <button class="btn btn-outline-primary" type="submit">Buscar</button>
-        </div>
-    </form>
-    <div class="row">
-        <?php while ($producto = mysqli_fetch_assoc($resultado)) { ?>
-            <div class="col-sm-6 col-md-4 mb-4 d-flex">
-                <div class="card producto-card w-100">
-                    <a href="detalle_producto.php?id=<?php echo $producto['id']; ?>">
-                        <img src="<?php echo $producto['imagen']; ?>" class="card-img-top" alt="<?php echo $producto['nombre']; ?>">
-                    </a>
-                    <div class="card-body text-center">
-                        <h5 class="card-title"><?php echo $producto['nombre']; ?></h5>
-                        <p class="card-text"><?php echo $producto['descripcion']; ?></p>
-                        <p class="card-text fw-bold">€<?php echo number_format($producto['precio'], 2); ?></p>
-                        <a href="detalle_producto.php?id=<?php echo $producto['id']; ?>" class="btn btn-primary mb-2">Ver detalles</a>
-                        <a href="agregar_al_carrito.php?id=<?php echo $producto['id']; ?>" class="btn btn-outline-success">Añadir al carrito</a>
-                    </div>
+<div class="container" id="productos">
+    <h2>Productos UrbanWear</h2>
+    <div class="row g-4">
+        <?php while ($producto = mysqli_fetch_assoc($result)): ?>
+        <div class="col-md-4">
+            <div class="card">
+                <img src="<?= htmlspecialchars($producto['imagen']) ?>" class="card-img-top" alt="<?= htmlspecialchars($producto['nombre']) ?>" />
+                <div class="card-body">
+                    <h5 class="card-title"><?= htmlspecialchars($producto['nombre']) ?></h5>
+                    <p class="card-text"><?= htmlspecialchars($producto['descripcion']) ?></p>
+                    <p class="card-text fw-bold"><?= number_format($producto['precio'], 2) ?> €</p>
+                    <a href="detalle_producto.php?id=<?= $producto['id'] ?>" class="btn btn-custom">Ver detalles y añadir</a>
                 </div>
             </div>
-        <?php } ?>
+        </div>
+        <?php endwhile; ?>
     </div>
 </div>
 
-<?php include "includes/footer.php"; ?>
+<?php include 'includes/footer.php'; ?>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

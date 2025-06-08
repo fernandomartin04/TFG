@@ -31,7 +31,7 @@ if ($resultado && mysqli_num_rows($resultado) > 0) {
             <p><?php echo htmlspecialchars($producto['descripcion']); ?></p>
             <h4><?php echo number_format($producto['precio'], 2); ?> €</h4>
 
-            <form method="GET" action="agregar_al_carrito.php">
+            <form method="POST" action="agregar_al_carrito.php?id=<?= $producto['id'] ?>">
                 <div class="mb-3">
                     <label for="talla" class="form-label">Selecciona tu talla:</label>
                     <select name="talla" id="talla" class="form-select" required>
@@ -43,8 +43,6 @@ if ($resultado && mysqli_num_rows($resultado) > 0) {
                         <option value="XL">XL</option>
                     </select>
                 </div>
-
-                <input type="hidden" name="id" value="<?php echo $producto['id']; ?>">
                 <button type="submit" class="btn btn-primary">Añadir al carrito</button>
             </form>
         </div>

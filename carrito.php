@@ -1,16 +1,38 @@
 <?php
+ob_start();
 session_start();
 require "includes/db.php";
-include "includes/header.php";
 
-if (!isset($_SESSION['id'])) {
+$usuario_id = $_SESSION['usuario_id'] ?? 0;
+
+if (!$usuario_id) {
     header("Location: login.php");
     exit();
 }
 
-$usuario_id = $_SESSION['id'];
+// Procesar actualización de talla
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_talla'])) {
+    $producto_id = isset($_POST['producto_id']) ? intval($_POST['producto_id']) : 0;
+    $nueva_talla = $_POST['talla'] ?? '';
 
-$query = "SELECT c.id AS carrito_id, c.producto_id, c.cantidad, c.talla, p.nombre, p.precio
+    $tallas_validas = ['XS', 'S', 'M', 'L', 'XL'];
+
+    if ($producto_id > 0 && in_array($nueva_talla, $tallas_validas)) {
+        $stmt = $conn->prepare("UPDATE carritos SET talla = ? WHERE usuario_id = ? AND producto_id = ? LIMIT 1");
+        $stmt->bind_param("sii", $nueva_talla, $usuario_id, $producto_id);
+        $stmt->execute();
+        $stmt->close();
+
+        header("Location: carrito.php", true, 303);
+        exit();
+    } else {
+        echo "<div class='alert alert-danger'>Datos inválidos para actualizar talla.</div>";
+    }
+}
+
+include "includes/header.php";
+
+$query = "SELECT c.producto_id, c.cantidad, c.talla, p.nombre, p.precio, p.imagen
           FROM carritos c
           JOIN productos p ON c.producto_id = p.id
           WHERE c.usuario_id = ?";
@@ -18,73 +40,74 @@ $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $usuario_id);
 $stmt->execute();
 $result = $stmt->get_result();
+
+$total = 0;
 ?>
 
 <div class="container mt-5">
-    <h2 class="text-center mb-4">🛒 Tu carrito de compras</h2>
+    <h2>Carrito de la compra</h2>
 
-    <?php if ($result->num_rows === 0): ?>
-        <div class="alert alert-info text-center">Tu carrito está vacío.</div>
+    <?php if (!$result || $result->num_rows === 0): ?>
+        <p>Tu carrito está vacío.</p>
     <?php else: ?>
-        <table class="table table-bordered text-center">
-            <thead class="table-dark">
+        <table class="table">
+            <thead>
                 <tr>
                     <th>Producto</th>
-                    <th>Talla</th>
-                    <th>Precio</th>
                     <th>Cantidad</th>
+                    <th>Talla</th>
+                    <th>Precio unitario</th>
                     <th>Subtotal</th>
+                    <th>Actualizar talla</th>
                     <th>Eliminar</th>
                 </tr>
             </thead>
             <tbody>
-                <?php
-                $total = 0;
-                while ($row = $result->fetch_assoc()) {
-                    $subtotal = $row['precio'] * $row['cantidad'];
+                <?php while ($row = $result->fetch_assoc()):
+                    $subtotal = $row['cantidad'] * $row['precio'];
                     $total += $subtotal;
-                    echo "<tr>";
-
-                    echo "<td>" . htmlspecialchars($row['nombre']) . "</td>";
-
-                    echo "<td>
-                        <form method='POST' action='actualizar_talla.php' class='d-flex justify-content-center'>
-                            <input type='hidden' name='carrito_id' value='{$row['carrito_id']}'>
-                            <select name='talla' class='form-select form-select-sm me-1' style='width:auto'>
-                                <option value=''>--</option>
-                                <option value='XS' " . ($row['talla'] === 'XS' ? 'selected' : '') . ">XS</option>
-                                <option value='S' "  . ($row['talla'] === 'S' ? 'selected' : '') . ">S</option>
-                                <option value='M' "  . ($row['talla'] === 'M' ? 'selected' : '') . ">M</option>
-                                <option value='L' "  . ($row['talla'] === 'L' ? 'selected' : '') . ">L</option>
-                                <option value='XL' " . ($row['talla'] === 'XL' ? 'selected' : '') . ">XL</option>
-                            </select>
-                            <button class='btn btn-sm btn-outline-secondary' type='submit'>💾</button>
-                        </form>
-                    </td>";
-
-                    echo "<td>" . number_format($row['precio'], 2) . " €</td>";
-                    echo "<td>{$row['cantidad']}</td>";
-                    echo "<td>" . number_format($subtotal, 2) . " €</td>";
-
-                    $url = "eliminar_del_carrito.php?id={$row['producto_id']}";
-                    if (!empty($row['talla'])) {
-                        $url .= "&talla=" . urlencode($row['talla']);
-                    }
-
-                    echo "<td><a href='$url' class='btn btn-danger btn-sm'>Eliminar</a></td>";
-                    echo "</tr>";
-                }
                 ?>
-                <tr class="table-secondary">
-                    <td colspan="4"><strong>Total</strong></td>
-                    <td colspan="2"><strong><?= number_format($total, 2) ?> €</strong></td>
+                <tr>
+                    <td>
+                        <img src="<?= htmlspecialchars($row['imagen']) ?>" style="width: 60px; height: 60px; object-fit: cover;">
+                        <?= htmlspecialchars($row['nombre']) ?>
+                    </td>
+                    <td><?= $row['cantidad'] ?></td>
+                    <td><?= htmlspecialchars($row['talla']) ?></td>
+                    <td><?= number_format($row['precio'], 2) ?> €</td>
+                    <td><?= number_format($subtotal, 2) ?> €</td>
+                    <td>
+                        <form method="POST" action="carrito.php" class="d-flex align-items-center gap-2">
+                            <input type="hidden" name="producto_id" value="<?= $row['producto_id'] ?>">
+                            <select name="talla" class="form-select form-select-sm" required>
+                                <?php
+                                $tallas = ['XS', 'S', 'M', 'L', 'XL'];
+                                foreach ($tallas as $talla_opcion) {
+                                    $selected = ($row['talla'] === $talla_opcion) ? 'selected' : '';
+                                    echo "<option value=\"$talla_opcion\" $selected>$talla_opcion</option>";
+                                }
+                                ?>
+                            </select>
+                            <button type="submit" name="update_talla" class="btn btn-sm btn-primary">Actualizar</button>
+                        </form>
+                    </td>
+                    <td>
+                        <a href="eliminar_del_carrito.php?id=<?= $row['producto_id'] ?>"
+                           onclick="return confirm('¿Quieres eliminar este producto del carrito?');"
+                           class="btn btn-danger btn-sm">Eliminar</a>
+                    </td>
+                </tr>
+                <?php endwhile; ?>
+                <tr>
+                    <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                    <td colspan="3"><strong><?= number_format($total, 2) ?> €</strong></td>
                 </tr>
             </tbody>
         </table>
-        <div class="text-center">
-            <a href="confirmar_pedido.php" class="btn btn-success">Confirmar pedido</a>
-        </div>
+
+        <a href="confirmar_pedido.php" class="btn btn-success">Confirmar pedido</a>
     <?php endif; ?>
 </div>
 
 <?php include "includes/footer.php"; ?>
+<?php ob_end_flush(); ?>

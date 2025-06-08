@@ -3,12 +3,12 @@ session_start();
 require "includes/db.php";
 include "includes/header.php";
 
-if (!isset($_SESSION['id'])) {
+if (!isset($_SESSION['usuario_id'])) {
     header("Location: login.php");
     exit();
 }
 
-$usuario_id = $_SESSION['id'];
+$usuario_id = $_SESSION['usuario_id'];
 
 // Obtener todos los pedidos del usuario
 $query_pedidos = "SELECT * FROM pedidos WHERE usuario_id = ? ORDER BY fecha DESC";

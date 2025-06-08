@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once "includes/db.php";
 
 if ($_SESSION['rol_id'] != 3) {
     header("Location: login.php");
@@ -10,20 +11,15 @@ include "includes/header.php";
 
 if (isset($_POST['id'])) {
     if ($conn) {
-        $id = $_POST['id'];
+        $id = intval($_POST['id']);
 
         $queryObtenerUsuario = "SELECT * FROM usuarios WHERE id = $id";
         $resultado = mysqli_query($conn, $queryObtenerUsuario);
 
-        if ($resultado && mysqli_num_rows($resultado) != false) {
-            $usuario = mysqli_fetch_assoc($resultado);
-
-            $nombreUsuario = $usuario['nombre']; // Utilizamos el nombre de usuario obtenido
-
-            // Ahora eliminar el usuario
+        if ($resultado && mysqli_num_rows($resultado) > 0) {
             $queryEliminarUsuario = "DELETE FROM usuarios WHERE id = $id";
             if (mysqli_query($conn, $queryEliminarUsuario)) {
-                header("Location: panel_admin.php");
+                header("Location: panel_admin.php?mensaje=eliminado");
                 exit();
             } else {
                 echo "Error al eliminar el usuario: " . mysqli_error($conn);
