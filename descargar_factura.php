@@ -100,7 +100,7 @@ while ($row = $result->fetch_assoc()) {
     $pdf->Cell(35,10,number_format($subtotal,2).' '.chr(128),1,1,'R');
 }
 
-// Cupón aplicado (si hay)
+// Cupón aplicado
 $hay_cupon = !empty($pedido['cupon_codigo']) && $pedido['cupon_descuento'] > 0;
 
 // Línea cupón

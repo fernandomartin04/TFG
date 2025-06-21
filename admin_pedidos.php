@@ -57,6 +57,7 @@ include "includes/header.php";
                 <th>Método pago</th>
                 <th>Estado actual</th>
                 <th>Cambiar estado</th>
+                <th>Acciones</th> <!-- NUEVA COLUMNA -->
             </tr>
         </thead>
         <tbody>
@@ -81,11 +82,14 @@ include "includes/header.php";
                             <button type="submit" class="btn btn-sm btn-primary">Actualizar</button>
                         </form>
                     </td>
+                    <td>
+                        <a href="ver_pedido.php?id=<?= $pedido['id'] ?>" class="btn btn-sm btn-info">Ver pedido</a> <!-- NUEVO BOTÓN -->
+                    </td>
                 </tr>
             <?php endwhile; ?>
             <?php if ($result->num_rows === 0): ?>
                 <tr>
-                    <td colspan="7" class="text-center">No hay pedidos.</td>
+                    <td colspan="8" class="text-center">No hay pedidos.</td> <!-- AJUSTADO colspan -->
                 </tr>
             <?php endif; ?>
         </tbody>

@@ -2,6 +2,9 @@
 include "includes/header.php";
 require "includes/db.php";
 
+// OPCIONAL: Muestra errores MySQLi para depuración
+// mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
 if (!isset($_SESSION['rol_id']) || ($_SESSION['rol_id'] != 2 && $_SESSION['rol_id'] != 3)) {
     header("Location: login.php");
     exit();
@@ -21,8 +24,12 @@ if (isset($_GET['eliminar'])) {
         unlink("img/" . $imagen);
     }
 
-    $conn->query("DELETE FROM productos WHERE id = $id");
+    // Primero eliminar el stock relacionado
     $conn->query("DELETE FROM stock_productos_tallas WHERE producto_id = $id");
+
+    // Luego eliminar el producto
+    $conn->query("DELETE FROM productos WHERE id = $id");
+
     echo "<div class='alert alert-success'>Producto eliminado.</div>";
 }
 
@@ -85,60 +92,63 @@ $productos = $conn->query("SELECT * FROM productos ORDER BY fecha_creacion DESC"
         </tbody>
     </table>
 
-<?php if (isset($_GET['editar'])):
-    $id = intval($_GET['editar']);
-    $stmt = $conn->prepare("SELECT * FROM productos WHERE id = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $producto = $stmt->get_result()->fetch_assoc();
-?>
-<hr>
-<h4>Editar producto</h4>
-<form method="POST">
-    <input type="hidden" name="id" value="<?= $producto['id'] ?>">
-    <div class="mb-2">
-        <label class="form-label">Nombre</label>
-        <input type="text" class="form-control" name="nombre" value="<?= htmlspecialchars($producto['nombre']) ?>" required>
+    <?php if (isset($_GET['editar'])):
+        $id = intval($_GET['editar']);
+        $stmt = $conn->prepare("SELECT * FROM productos WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $producto = $stmt->get_result()->fetch_assoc();
+    ?>
+    <div class="mt-5 p-4 border rounded bg-light">
+        <h4>Editar producto</h4>
+        <form method="POST">
+            <input type="hidden" name="id" value="<?= $producto['id'] ?>">
+            <div class="mb-2">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control" name="nombre" value="<?= htmlspecialchars($producto['nombre']) ?>" required>
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control" name="descripcion" rows="3"><?= htmlspecialchars($producto['descripcion']) ?></textarea>
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Precio (€)</label>
+                <input type="number" class="form-control" step="0.01" name="precio" value="<?= $producto['precio'] ?>" required>
+            </div>
+            <button class="btn btn-success" name="editar_producto" type="submit">Guardar cambios</button>
+        </form>
     </div>
-    <div class="mb-2">
-        <label class="form-label">Descripción</label>
-        <textarea class="form-control" name="descripcion" rows="3"><?= htmlspecialchars($producto['descripcion']) ?></textarea>
-    </div>
-    <div class="mb-2">
-        <label class="form-label">Precio (€)</label>
-        <input type="number" class="form-control" step="0.01" name="precio" value="<?= $producto['precio'] ?>" required>
-    </div>
-    <button class="btn btn-success" name="editar_producto" type="submit">Guardar cambios</button>
-</form>
-<?php endif; ?>
+    <?php endif; ?>
 
-<?php if (isset($_GET['stock'])):
-    $id = intval($_GET['stock']);
-    $tallas = ['XS', 'S', 'M', 'L', 'XL'];
-    $stock_actual = [];
-    $res = $conn->prepare("SELECT talla, stock FROM stock_productos_tallas WHERE producto_id = ?");
-    $res->bind_param("i", $id);
-    $res->execute();
-    $result = $res->get_result();
-    while ($fila = $result->fetch_assoc()) {
-        $stock_actual[$fila['talla']] = $fila['stock'];
-    }
-?>
-<hr>
-<h4>Editar stock por talla</h4>
-<form method="POST">
-    <input type="hidden" name="producto_id" value="<?= $id ?>">
-    <div class="row">
-        <?php foreach ($tallas as $talla): ?>
-        <div class="col-md-2 mb-2">
-            <label class="form-label"><?= $talla ?></label>
-            <input type="number" class="form-control" name="stock_<?= $talla ?>" value="<?= $stock_actual[$talla] ?? 0 ?>">
-        </div>
-        <?php endforeach; ?>
+    <?php if (isset($_GET['stock'])):
+        $id = intval($_GET['stock']);
+        $tallas = ['XS', 'S', 'M', 'L', 'XL'];
+        $stock_actual = [];
+        $res = $conn->prepare("SELECT talla, stock FROM stock_productos_tallas WHERE producto_id = ?");
+        $res->bind_param("i", $id);
+        $res->execute();
+        $result = $res->get_result();
+        while ($fila = $result->fetch_assoc()) {
+            $stock_actual[$fila['talla']] = $fila['stock'];
+        }
+    ?>
+    <div class="mt-5 p-4 border rounded bg-light">
+        <h4>Editar stock por talla</h4>
+        <form method="POST">
+            <input type="hidden" name="producto_id" value="<?= $id ?>">
+            <div class="row">
+                <?php foreach ($tallas as $talla): ?>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label"><?= $talla ?></label>
+                    <input type="number" class="form-control" name="stock_<?= $talla ?>" value="<?= $stock_actual[$talla] ?? 0 ?>">
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button class="btn btn-success" name="guardar_stock" type="submit">Actualizar stock</button>
+        </form>
     </div>
-    <button class="btn btn-success" name="guardar_stock" type="submit">Actualizar stock</button>
-</form>
-<?php endif; ?>
+    <?php endif; ?>
 
 </div>
+
 <?php include "includes/footer.php"; ?>

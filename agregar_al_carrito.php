@@ -12,7 +12,7 @@ if ($producto_id <= 0 || empty($talla) || $cantidad <= 0) {
 }
 
 if ($usuario_id) {
-    // Usuario logueado → guardar en base de datos
+    // Usuario logueado guardar en base de datos
     $query = "SELECT id, cantidad FROM carritos WHERE usuario_id = ? AND producto_id = ? AND talla = ?";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("iis", $usuario_id, $producto_id, $talla);
@@ -31,7 +31,7 @@ if ($usuario_id) {
         $insert->execute();
     }
 } else {
-    // Usuario no logueado → guardar en $_SESSION
+    // Usuario no logueado guardar en $_SESSION
     if (!isset($_SESSION['carrito'])) {
         $_SESSION['carrito'] = [];
     }

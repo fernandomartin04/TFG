@@ -2,7 +2,7 @@
 include "includes/header.php";
 require "includes/db.php";
 
-// Comprobación de rol (solo vendedores/admins)
+// Comprobación de rol 
 if (!isset($_SESSION['rol_id']) || ($_SESSION['rol_id'] != 2 && $_SESSION['rol_id'] != 3)) {
     header("Location: login.php");
     exit();
@@ -25,20 +25,20 @@ if (isset($_POST['guardar'])) {
     $imagen_tamano    = $_FILES['imagen']['size'];
     $extension        = strtolower(pathinfo($imagen_original, PATHINFO_EXTENSION));
 
-    // 1) Comprobamos si hubo error en la carga
+    //Comprobamos si hubo error en la carga
     if ($imagen_error !== UPLOAD_ERR_OK) {
         echo "<div class='container mt-4 alert alert-danger'>Error al subir la imagen.</div>";
         exit;
     }
 
-    // 2) Validamos extensión permitida
+    //Validamos extensión permitida
     $extensiones_permitidas = ['jpg', 'jpeg', 'png', 'webp'];
     if (!in_array($extension, $extensiones_permitidas)) {
         echo "<div class='container mt-4 alert alert-danger'>Formato de imagen no permitido.</div>";
         exit;
     }
 
-    // 3) Validamos tipo MIME real
+    //Validamos tipo MIME real
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime = finfo_file($finfo, $imagen_temporal);
     finfo_close($finfo);
@@ -48,13 +48,13 @@ if (isset($_POST['guardar'])) {
         exit;
     }
 
-    // 4) Validamos tamaño máximo (2MB)
+    //Validamos tamaño máximo 2MB
     if ($imagen_tamano > 2 * 1024 * 1024) {
         echo "<div class='container mt-4 alert alert-danger'>El archivo excede el tamaño permitido (2MB).</div>";
         exit;
     }
 
-    // 5) Movemos la imagen
+    // Movemos la imagen
     $nuevo_nombre_imagen = uniqid() . '.' . $extension;
     $ruta_imagen = 'img/' . $nuevo_nombre_imagen;
 
@@ -63,7 +63,7 @@ if (isset($_POST['guardar'])) {
         exit;
     }
 
-    // 6) Insertamos en la base de datos
+    // Insertamos en la base de datos
     $stmt = $conn->prepare("INSERT INTO productos (nombre, descripcion, precio, imagen, fecha_creacion, id_vendedor) VALUES (?, ?, ?, ?, NOW(), ?)");
     $stmt->bind_param("ssdsi", $nombre, $descripcion, $precio, $ruta_imagen, $_SESSION['usuario_id']);
 

@@ -17,7 +17,7 @@ if ($producto_id > 0 && in_array($nueva_talla, $tallas_validas)) {
     $row = $result->fetch_assoc();
 
     if ($row && $row['stock'] > 0) {
-        // ✅ Si hay stock, actualizamos la talla
+        // Si hay stock, actualizamos la talla
         if ($usuario_id) {
             $stmt = $conn->prepare("UPDATE carritos SET talla = ? WHERE usuario_id = ? AND producto_id = ?");
             $stmt->bind_param("sii", $nueva_talla, $usuario_id, $producto_id);
@@ -34,7 +34,7 @@ if ($producto_id > 0 && in_array($nueva_talla, $tallas_validas)) {
             }
         }
     } else {
-        // ❌ No hay stock → redirigimos con mensaje
+        // No hay stock redirigimos con mensaje
         $_SESSION['error_carrito'] = "No hay stock disponible para la talla seleccionada.";
     }
 }

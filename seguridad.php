@@ -1,7 +1,7 @@
 <?php
 // seguridad.php
 
-// Importante: debe ir arriba del todo y sin espacios antes
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
